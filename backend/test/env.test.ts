@@ -26,6 +26,11 @@ describe("Durable Object stubs from src/env", () => {
     expect(() => (namespace as DurableObjectNamespace).jurisdiction("fedramp")).toThrow(/not eu/);
   });
 
+  it("refuses a jurisdiction other than the EU", () => {
+    const { namespace } = euOnly(env.CONVERSATION);
+    expect(() => (namespace as DurableObjectNamespace).jurisdiction("fedramp")).toThrow(/not eu/);
+  });
+
   it("fails when a stub skips the jurisdiction", () => {
     const { namespace } = euOnly(env.CONVERSATION);
     expect(() => (namespace as DurableObjectNamespace).getByName("conv-1")).toThrow(

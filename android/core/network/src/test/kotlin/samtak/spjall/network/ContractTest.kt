@@ -40,7 +40,8 @@ class ContractTest {
         }
         val notify = json.decodeFromString(WsFrame.serializer(), """{"type":"notify","conversationId":"c2","seq":7}""")
         assertEquals(NotifyFrame(conversationId = "c2", seq = 7), notify)
-        val typing = json.decodeFromString(WsFrame.serializer(), """{"type":"typing","conversationId":"c2","ciphertext":"AAEC"}""")
+        val typingText = """{"type":"typing","conversationId":"c2","ciphertext":"AAEC"}"""
+        val typing = json.decodeFromString(WsFrame.serializer(), typingText)
         assertEquals(TypingFrame(conversationId = "c2", ciphertext = "AAEC"), typing)
     }
 }

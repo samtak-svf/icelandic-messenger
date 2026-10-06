@@ -39,19 +39,23 @@ const MIGRATIONS: &[(u32, &str)] = &[
         2,
         // Decision 0018. Lists of account ids are one per line: an id never
         // holds a newline.
-        "-- The account and device this store belongs to, once registered.
+        "-- This device: its key from the moment it is made, and the account
+         -- and device ids once the server has registered it.
          CREATE TABLE account (
              id         INTEGER PRIMARY KEY CHECK (id = 1),
-             account_id TEXT NOT NULL,
-             device_id  TEXT NOT NULL
+             device_key BLOB NOT NULL,
+             account_id TEXT,
+             device_id  TEXT,
+             CHECK ((account_id IS NULL) = (device_id IS NULL))
          ) STRICT;
 
-         -- Every group this device is or was in. `cursor` is the last seq
-         -- processed, so a fetch asks for what comes after it.
+         -- Every group this device is or was in. `new` until the server
+         -- has it; `cursor` is the last seq processed, so a fetch asks for
+         -- what comes after it.
          CREATE TABLE conversations (
              group_id   BLOB PRIMARY KEY,
              state      TEXT NOT NULL DEFAULT 'active'
-                        CHECK (state IN ('active', 'removed', 'stale')),
+                        CHECK (state IN ('new', 'active', 'removed', 'stale')),
              cursor     INTEGER NOT NULL CHECK (cursor >= 0),
              created_at INTEGER NOT NULL
          ) STRICT, WITHOUT ROWID;
@@ -135,6 +139,15 @@ impl Store {
         &mut self,
         f: impl FnOnce(&Transaction) -> rusqlite::Result<T>,
     ) -> rusqlite::Result<T> {
+        self.try_write(f)
+    }
+
+    /// `write` for a caller with its own error type, which rolls back the
+    /// same way.
+    pub fn try_write<T, E: From<rusqlite::Error>>(
+        &mut self,
+        f: impl FnOnce(&Transaction) -> Result<T, E>,
+    ) -> Result<T, E> {
         let tx = self
             .connection
             .transaction_with_behavior(TransactionBehavior::Immediate)?;
@@ -260,7 +273,8 @@ mod tests {
         store
             .write(|tx| {
                 tx.execute_batch(
-                    "INSERT INTO account VALUES (1, 'a_1', 'd_1');
+                    "INSERT INTO account VALUES (1, x'01', NULL, NULL);
+                     UPDATE account SET account_id = 'a_1', device_id = 'd_1';
                      INSERT INTO conversations (group_id, cursor, created_at) VALUES (x'01', 0, 0);
                      INSERT INTO messages VALUES (x'01', 1, 'a_1', 'd_1', x'00', 0);
                      INSERT INTO outbox (group_id, kind, intent, created_at)

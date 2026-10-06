@@ -2367,6 +2367,8 @@ dependencies = [
  "openmls_rust_crypto",
  "openmls_traits",
  "serde_json",
+ "spjall-store",
+ "tempfile",
  "thiserror",
 ]
 

@@ -8,7 +8,8 @@ import Security
 /// device.
 struct StoreKey {
     /// The Keychain access group both targets share: the App Group, which iOS
-    /// accepts as an access group. Nil only in tests, which run unsigned.
+    /// accepts as an access group. Nil only in tests, which are signed
+    /// ad hoc and so have no access group to share.
     let accessGroup: String?
 
     static let byteCount = 32

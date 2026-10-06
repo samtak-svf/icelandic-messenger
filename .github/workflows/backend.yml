@@ -18,12 +18,16 @@ on:
       - "api/**"
       - "identifiers/**"
       - "tooling/jurisdiction-check.mjs"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
       - ".github/workflows/backend.yml"
   push:
     branches: [main]
     paths:
       - "backend/**"
       - "identifiers/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
       - ".github/workflows/backend.yml"
 
 concurrency:

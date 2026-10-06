@@ -18,6 +18,8 @@ on:
       - "backend/package.json"
       - "api/**"
       - "tooling/ws-kotlin.mjs"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
       - ".github/workflows/contract.yml"
 
 concurrency:

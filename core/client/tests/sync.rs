@@ -4,7 +4,7 @@
 #[path = "support/relay.rs"]
 mod relay;
 
-use std::rc::Rc;
+use std::sync::Arc;
 
 use relay::{Link, Relay};
 use spjall_client::{Client, ClientError, Event, State, api::ApiError};
@@ -15,7 +15,7 @@ use tempfile::TempDir;
 const KEY: [u8; 32] = [7; 32];
 
 struct Phone {
-    relay: Rc<Relay>,
+    relay: Arc<Relay>,
     account: String,
     device: String,
     dir: TempDir,
@@ -23,7 +23,7 @@ struct Phone {
 }
 
 impl Phone {
-    fn new(relay: &Rc<Relay>, account: &str, device: &str) -> Self {
+    fn new(relay: &Arc<Relay>, account: &str, device: &str) -> Self {
         let dir = tempfile::tempdir().unwrap();
         let mut client = Client::open(dir.path(), &KEY, relay.link(account, device)).unwrap();
         client.device_key().unwrap();

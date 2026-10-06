@@ -104,7 +104,9 @@ The Worker also serves the link host:
   checks PKCE, and lets a test pick its person with `login_hint`. The test Worker and
   `dev/worker.ts` mount it, and `KENNI_ISSUER` points at it. The interop test registers through
   it as an app does, so `POST /dev/devices` goes away.
-- Test people have kennitölur born in 2099 (`tooling/pii-guard.mjs`).
+- Test people have kennitölur born in 2099, which belong to nobody. They are computed when a
+  test runs and never written out, because `tooling/pii-guard.mjs` refuses any valid person's
+  kennitala in a file, whatever its date.
 
 ## Why
 

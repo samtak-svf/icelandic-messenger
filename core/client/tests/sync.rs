@@ -302,7 +302,10 @@ fn typing_is_relayed_and_never_stored() {
         a1.client.send(&conversation, Body::Typing { active: true }),
         Err(ClientError::Invalid(_))
     ));
+    a1.sync();
     assert_eq!(relay.stored(&conversation), 1);
+    assert!(b1.deliver().is_empty());
+    assert!(a1.history(&conversation).is_empty());
     assert!(b1.history(&conversation).is_empty());
 }
 

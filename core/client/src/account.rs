@@ -13,8 +13,10 @@ use sha2::{Digest as _, Sha256};
 use spjall_mls::group::Device;
 use spjall_store::rusqlite::{OptionalExtension, Transaction, params};
 
+use crate::api::conversation_id;
 use crate::api::{Api, ApiError, Inviter, Me, Platform, Registration, Transport};
-use crate::{Client, ClientError, authed, now};
+use crate::members::members;
+use crate::{Client, ClientError, authed, is_id, now, this_device};
 
 /// The link host and the app's scheme, as `hosts.link`,
 /// `hosts.linkPathPrefix` and `store.urlScheme` in `identifiers/ids.json`
@@ -318,6 +320,44 @@ impl<T: Transport> Client<T> {
             return Err(ClientError::Invalid("invite token"));
         }
         Ok(Api::new(&self.transport, None).resolve_invite(token)?)
+    }
+
+    /// The 1:1 an invite link opens (0022): the conversation this account
+    /// already has with the inviter alone, or a new one that adds them on
+    /// the next `sync`. The operator's link and this account's own open
+    /// none.
+    pub fn open_invite(&mut self, token: &str) -> Result<String, ClientError> {
+        let inviter = self.resolve_invite(token)?.ok_or(ClientError::Invalid(
+            "the operator's invite opens no conversation",
+        ))?;
+        if !is_id(&inviter.account_id) {
+            return Err(ClientError::Protocol("an inviter's account id"));
+        }
+        let found = self.store.try_write(|tx| {
+            let (_, me) = this_device(tx)?;
+            if inviter.account_id == me.account {
+                return Err(ClientError::Invalid("this account's own invite"));
+            }
+            let mut pair = vec![me.account, inviter.account_id.clone()];
+            pair.sort();
+            let mut statement = tx.prepare(
+                "SELECT group_id FROM conversations WHERE state != 'removed'
+                 ORDER BY created_at DESC",
+            )?;
+            let groups: Vec<Vec<u8>> = statement
+                .query_map([], |r| r.get(0))?
+                .collect::<Result<_, _>>()?;
+            for group in groups {
+                if members(tx, &group)? == pair {
+                    return Ok(Some(group));
+                }
+            }
+            Ok(None)
+        })?;
+        match found {
+            Some(group) => Ok(conversation_id(&group)),
+            None => self.create_conversation(&[inviter.account_id]),
+        }
     }
 
     /// This account's invite link as this device last made it.

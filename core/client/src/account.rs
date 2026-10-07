@@ -410,14 +410,17 @@ impl<T: Transport> Client<T> {
         self.forget()
     }
 
-    /// Empties the store: the device key, the groups, history, the outbox.
-    /// The next sign-in starts as a new device.
+    /// Empties the store: the device key, the groups, history and the
+    /// timeline, the outbox, the names fetched and the toggles. The next
+    /// sign-in starts as a new device.
     fn forget(&mut self) -> Result<(), ClientError> {
         self.store.write(|tx| {
             tx.execute_batch(
                 "DELETE FROM outbox;
                  DELETE FROM messages;
                  DELETE FROM conversations;
+                 DELETE FROM profiles;
+                 DELETE FROM settings;
                  DELETE FROM sign_in;
                  DELETE FROM account;
                  DELETE FROM kv;",

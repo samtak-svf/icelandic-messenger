@@ -36,12 +36,13 @@ final class NotificationService: UNNotificationServiceExtension, @unchecked Send
 
     /// Hands the system its content once; the fallback when there is none.
     private func deliver(_ content: UNNotificationContent?) {
-        let (handler, fallback) = lock.withLock {
-            defer { handler = nil }
-            return (handler, fallback)
-        }
-        guard let handler, let fallback else { return }
-        handler(content ?? fallback)
+        lock.lock()
+        let pending = handler
+        let original = fallback
+        handler = nil
+        lock.unlock()
+        guard let pending, let original else { return }
+        pending(content ?? original)
     }
 
     /// The alert this push becomes; nil when the store or the server could not be read.

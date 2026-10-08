@@ -332,7 +332,7 @@
         "is": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ bætti við nýju tæki."
+            "value": "%1$@ tengdi nýtt tæki."
           }
         }
       }
@@ -632,7 +632,7 @@
         "is": {
           "stringUnit": {
             "state": "translated",
-            "value": "Eyða fyrir öllum"
+            "value": "Taka til baka"
           }
         }
       }
@@ -644,7 +644,7 @@
         "is": {
           "stringUnit": {
             "state": "translated",
-            "value": "Eyða skilaboðunum fyrir öllum? Þau hverfa af tækjum allra í samtalinu."
+            "value": "Taka skilaboðin til baka? Þau hverfa úr tækjum allra í samtalinu."
           }
         }
       }
@@ -656,7 +656,7 @@
         "is": {
           "stringUnit": {
             "state": "translated",
-            "value": "Þessum skilaboðum var eytt."
+            "value": "Skilaboðin voru tekin til baka."
           }
         }
       }
@@ -680,7 +680,7 @@
         "is": {
           "stringUnit": {
             "state": "translated",
-            "value": "Skilaboð sem hverfa"
+            "value": "Tímabundin skilaboð"
           }
         }
       }
@@ -704,7 +704,7 @@
         "is": {
           "stringUnit": {
             "state": "translated",
-            "value": "%1$@ slökkti á skilaboðum sem hverfa."
+            "value": "%1$@ slökkti á tímabundnum skilaboðum."
           }
         }
       }
@@ -1136,7 +1136,7 @@
         "is": {
           "stringUnit": {
             "state": "translated",
-            "value": "Aftengja tækið? Það getur ekki lengur sent eða tekið við skilaboðum."
+            "value": "Aftengja tækið? Þá getur það hvorki sent né tekið við skilaboðum."
           }
         }
       }

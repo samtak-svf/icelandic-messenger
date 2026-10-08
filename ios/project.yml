@@ -58,6 +58,11 @@ targets:
       - path: Generated/BrandTokens.swift
       - path: Generated/Localizable.xcstrings
       - path: Generated/Assets.xcassets
+      # The brand's font files and licences, copied as one Fonts folder;
+      # Typefaces.register() loads the faces BrandTokens.FontFiles lists.
+      - path: Generated/Fonts
+        type: folder
+        buildPhase: resources
     dependencies:
       - package: SpjallCore
       - package: SpjallAPI

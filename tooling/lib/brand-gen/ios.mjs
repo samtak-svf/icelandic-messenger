@@ -4,6 +4,7 @@
 // with their licences and the app icon.
 
 import { brandColors, fontFamilies, hex2, radii } from "./color.mjs";
+import { postScriptName } from "./font-name.mjs";
 import { renderOpaquePng } from "./icon.mjs";
 import { camel, keysFor, positional } from "./strings.mjs";
 
@@ -199,6 +200,18 @@ function tokensSwift(brand) {
   const fonts = fontFamilies(brand.tokens).map(
     (f) => `        static let ${camel(f.name)} = "${f.family}"`,
   );
+  const type = "[(file: String, name: String, weight: Int)]";
+  const faces = fontFamilies(brand.tokens).flatMap((f) => {
+    const list = brand.fonts
+      .filter((font) => font.family === f.name)
+      .map(
+        (font) =>
+          `            ("${font.fileName}", "${postScriptName(font.bytes)}", ${font.weight}),`,
+      );
+    return list.length === 0
+      ? [`        static let ${camel(f.name)}: ${type} = []`]
+      : [`        static let ${camel(f.name)}: ${type} = [`, ...list, "        ]"];
+  });
   const radius = radii(brand.tokens).map(
     (r) => `        static let ${camel(r.name)}: CGFloat = ${r.value}`,
   );
@@ -213,9 +226,17 @@ function tokensSwift(brand) {
     ...colors,
     "    }",
     "",
-    "    /// Font family names; the font files are bundled by the app.",
+    "    /// Font family names, as the design names them.",
     "    enum Fonts {",
     ...fonts,
+    "    }",
+    "",
+    "    /// Each family's bundled faces: the file in Fonts/, the PostScript name",
+    "    /// iOS finds it by, and its weight. An empty list means the family is",
+    "    /// not bundled and the system font stands in. The licences travel in",
+    "    /// Fonts/ beside the files.",
+    "    enum FontFiles {",
+    ...faces,
     "    }",
     "",
     "    enum Radius {",

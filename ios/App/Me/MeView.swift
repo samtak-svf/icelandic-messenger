@@ -163,10 +163,9 @@ private struct InviteCard: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 if let link = model.link, let url = URL(string: link) {
-                    HStack(spacing: 8) {
+                    Weighted(weights: [1, 1.4], spacing: 8) {
                         ShareLink(item: url) { PillLabel(text: "share", filled: true) }
                             .buttonStyle(.plain)
-                            .containerRelativeFrame(.horizontal) { width, _ in (width - 8) / 2.4 - 18 }
                         Button {
                             Task { await model.newLink() }
                         } label: {

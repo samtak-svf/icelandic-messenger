@@ -235,6 +235,25 @@ describe("brand-gen", () => {
     }
   });
 
+  it("makes the primary colour the iOS accent", () => {
+    const swift = output(ROOT, "ios/Generated/BrandTokens.swift");
+    const [, r, g, b] =
+      /static let primary = Color\(\.sRGB, red: (\d+) \/ 255, green: (\d+) \/ 255, blue: (\d+) \/ 255/.exec(
+        swift,
+      ) ?? [];
+    const accent = JSON.parse(
+      output(ROOT, "ios/Generated/Assets.xcassets/AccentColor.colorset/Contents.json"),
+    );
+    const hex = (/** @type {string | undefined} */ v) =>
+      `0x${Number(v).toString(16).padStart(2, "0").toUpperCase()}`;
+    expect(accent.colors[0].color.components).toEqual({
+      alpha: "1.000",
+      red: hex(r),
+      green: hex(g),
+      blue: hex(b),
+    });
+  });
+
   it("lists each iOS face by file, PostScript name and weight", () => {
     const manifest = readJson(`brand/${BRAND}/brand.json`);
     const swift = output(ROOT, "ios/Generated/BrandTokens.swift");

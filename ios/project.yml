@@ -75,6 +75,9 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: "YES"
         INFOPLIST_FILE: App/Info.plist
+        # The brand's primary (Generated/Assets.xcassets), so alerts, dialogs
+        # and system controls never show the system blue.
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         CODE_SIGN_ENTITLEMENTS: App/Spjall.entitlements
         # APNs' sandbox for development builds (decision 0025).
         SPJALL_APS_ENVIRONMENT: production

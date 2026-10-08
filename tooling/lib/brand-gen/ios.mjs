@@ -1,7 +1,7 @@
 // @ts-check
 // iOS outputs of the brand, all under ios/Generated/: the xcconfigs the
 // project includes, the string catalog, the token enum, the bundled fonts
-// with their licences and the app icon.
+// with their licences, the app icon and the accent colour.
 
 import { brandColors, fontFamilies, hex2, radii } from "./color.mjs";
 import { postScriptName } from "./font-name.mjs";
@@ -292,6 +292,39 @@ function appIcon(brand) {
 }
 
 /**
+ * The catalog's AccentColor, the brand's primary, which the project names as
+ * the app's global accent so system controls never fall back to their blue.
+ *
+ * @param {BrandInput} brand
+ * @returns {OutputFile}
+ */
+function accentColor(brand) {
+  const color = brandColors(brand.tokens).find((c) => c.name === "primary");
+  if (!color) throw new Error("tokens have no primary colour for the accent");
+  const component = (/** @type {number} */ byte) => `0x${hex2(byte)}`;
+  return {
+    path: `${DIR}/Assets.xcassets/AccentColor.colorset/Contents.json`,
+    content: json({
+      colors: [
+        {
+          color: {
+            "color-space": "srgb",
+            components: {
+              alpha: (color.a / 255).toFixed(3),
+              blue: component(color.b),
+              green: component(color.g),
+              red: component(color.r),
+            },
+          },
+          idiom: "universal",
+        },
+      ],
+      info: XCODE_INFO,
+    }),
+  };
+}
+
+/**
  * @param {BrandInput} brand
  * @returns {OutputFile[]}
  */
@@ -304,5 +337,6 @@ export function ios(brand) {
     { path: `${DIR}/BrandTokens.swift`, content: tokensSwift(brand) },
     ...fontFiles(brand),
     ...appIcon(brand),
+    accentColor(brand),
   ];
 }

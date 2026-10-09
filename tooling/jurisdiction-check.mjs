@@ -74,6 +74,23 @@ export function checkConfig(config, cloudflare) {
     "DO classes",
   );
 
+  // Every live class is declared in `exports` as sqlite, and the legacy
+  // `migrations` array is gone for good (decision 0032): a deploy that
+  // dropped a class from `exports` would delete its namespace.
+  if (config.legacyMigrations) {
+    problems.push("Durable Object `migrations` are replaced by `exports` (decision 0032)");
+  }
+  const live = config.classes.filter((c) => c.state === "created");
+  expect(
+    live
+      .map((c) => c.className)
+      .sort()
+      .join(","),
+    Object.values(cloudflare.durableObjects).sort().join(","),
+    "DO classes declared in exports",
+  );
+  for (const c of live) expect(c.storage, "sqlite", `DO ${c.className} storage`);
+
   if (config.queues) problems.push("Queues have no jurisdiction and are ruled out (decision 0001)");
   return problems;
 }

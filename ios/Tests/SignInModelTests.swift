@@ -118,7 +118,10 @@ final class SignInModelTests: XCTestCase {
         XCTAssertEqual(model.problem, .generic)
 
         await model.retry(browser: browser("cb:2"))
-        XCTAssertEqual(account.calls.filter { $0.hasPrefix("beginSignIn") }, ["beginSignIn kenni", "beginSignIn kenni"])
+        XCTAssertEqual(
+            account.calls.filter { $0.hasPrefix("beginSignIn") },
+            ["beginSignIn kenni", "beginSignIn kenni"]
+        )
         XCTAssertEqual(model.session, .signedIn)
     }
 

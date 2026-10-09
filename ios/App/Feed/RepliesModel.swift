@@ -42,7 +42,7 @@ final class RepliesModel {
                 self.replies = page.replies
                 self.next = page.next
                 self.loaded = true
-            } catch where error.isNotFound {
+            } catch let error where error.isNotFound {
                 self.gone = true
                 self.loaded = true
             }

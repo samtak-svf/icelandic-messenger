@@ -10,6 +10,13 @@ enum CoreStore {
     static let apiBase: URL? = (Bundle.main.object(forInfoDictionaryKey: "SpjallAPIHost") as? String)
         .flatMap { URL(string: "https://\($0)") }
 
+    /// This build's version (`MARKETING_VERSION`), which the core names in
+    /// every request (decision 0030).
+    static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
+
+    /// The `Spjall-Client` value the core sends; the socket sends it too.
+    static var client: String { "ios/\(version)" }
+
     static func open() throws -> CoreClient {
         guard let base = apiBase else { throw NoAPIHost() }
         let dir = try StoreLocation.directory()
@@ -17,7 +24,11 @@ enum CoreStore {
         return try CoreClient.open(
             dir: dir.path(percentEncoded: false),
             key: key,
-            transport: URLSessionTransport(baseURL: base)
+            transport: URLSessionTransport(baseURL: base, tooOld: { min in
+                Task { @MainActor in Update.shared.required(min) }
+            }),
+            platform: .ios,
+            version: version
         )
     }
 }

@@ -28,7 +28,7 @@
 import { readJson } from "./lib/repo.mjs";
 import { readWorkerConfig } from "./lib/worker-config.mjs";
 
-/** Samtak's own Cloudflare account (AGENTS.md § Infrastructure, decision 0032). */
+/** Samtak's own Cloudflare account (AGENTS.md § Infrastructure, decision 0031). */
 export const SAMTAK_ACCOUNT = "af4d4a9c4527ce1e46d0c2dc1165e801";
 const API = "https://api.cloudflare.com/client/v4";
 

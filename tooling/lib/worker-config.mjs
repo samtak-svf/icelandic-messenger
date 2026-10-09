@@ -1,7 +1,7 @@
 // @ts-check
 // The Worker's deploy config, read once for every guard (jurisdiction-check,
 // seam-guard). The guards see this model, never the file's own keys, so moving
-// off Wrangler (decision 0031) changes this file and nothing that checks it.
+// off Wrangler (#37) changes this file and nothing that checks it.
 //
 // A key the model does not know is an error, not a skip: a new kind of binding
 // would otherwise reach the Worker unseen by the seam guard.

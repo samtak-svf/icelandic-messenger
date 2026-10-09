@@ -124,7 +124,7 @@ final class CoreClientTests: XCTestCase {
 
     func testEveryRequestNamesTheBuildAndOneBelowTheFloorIsTold() throws {
         let a = try phone(account: "a", device: "a1")
-        XCTAssertEqual(a.clientHeader(), "ios/0.2.0")
+        XCTAssertEqual(try a.clientHeader(), "ios/0.2.0")
         _ = try a.sync()
         XCTAssertTrue(relay.clientHeaders().allSatisfy { $0 == "ios/0.2.0" })
 

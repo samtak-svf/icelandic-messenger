@@ -44,6 +44,9 @@ It is made in two steps, so the one step that cannot be undone is taken alone.
   comes from a `.dev.vars` written for the run, and D1 migrations go to `.wrangler/state`, where
   `cf dev` keeps its state. cf has no local `d1 query`, so the operator invite for that run is
   written by the dev Worker itself (`POST /dev/operator-invite`), never deployed.
+- `cf d1 migrations apply --local` prints its result but does not exit: its Miniflare keeps
+  watching the dev registry. `scripts/d1.ts` reads the result, ends cf, and gives each run a
+  registry of its own, because an entry left in the shared one breaks the next local command.
 - `wrangler` stays a pinned dev dependency: `cf dev` and `cf build` delegate to it.
 
 ## Rules out

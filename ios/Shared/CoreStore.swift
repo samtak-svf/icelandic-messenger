@@ -21,12 +21,13 @@ enum CoreStore {
         guard let base = apiBase else { throw NoAPIHost() }
         let dir = try StoreLocation.directory()
         let key = try StoreKey(accessGroup: StoreLocation.appGroup).load()
+        let transport = URLSessionTransport(baseURL: base) { min in
+            Task { @MainActor in Update.shared.required(min) }
+        }
         return try CoreClient.open(
             dir: dir.path(percentEncoded: false),
             key: key,
-            transport: URLSessionTransport(baseURL: base, tooOld: { min in
-                Task { @MainActor in Update.shared.required(min) }
-            }),
+            transport: transport,
             platform: .ios,
             version: version
         )

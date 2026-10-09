@@ -54,7 +54,7 @@ jobs:
       - name: Tests in workerd
         run: pnpm --filter spjall-backend test
 
-  # Asks Cloudflare whether the D1 database and the R2 bucket wrangler.jsonc
+  # Asks Cloudflare whether the D1 database and the R2 bucket cloudflare.config.ts
   # binds exist in the EU jurisdiction. Skipped until the read-only token is set, which happens when
   # the resources are created; from then on a missing or non-EU resource fails.
   jurisdiction:

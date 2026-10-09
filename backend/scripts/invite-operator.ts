@@ -24,7 +24,10 @@ if (import.meta.main) {
     process.exit(2);
   }
   if (where === "--local") {
-    const response = await fetch(`${DEV_ORIGIN}${OPERATOR_INVITE_PATH}`, { method: "POST" });
+    const response = await fetch(`${DEV_ORIGIN}${OPERATOR_INVITE_PATH}`, {
+      method: "POST",
+      signal: AbortSignal.timeout(30_000),
+    });
     if (!response.ok) {
       console.error(`The dev Worker answered ${response.status}; no invite was written.`);
       process.exit(1);

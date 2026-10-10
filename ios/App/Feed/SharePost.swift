@@ -7,7 +7,7 @@ extension PickModel {
     /// A post comes from no conversation, so every one it can send into is offered.
     static func sharing(_ postId: String, account: Account, live: Live) -> PickModel {
         PickModel(account: account, live: live) { account, to in
-            _ = (account, to, postId)
+            _ = try account.sharePost(to, postId: postId)
         }
     }
 }

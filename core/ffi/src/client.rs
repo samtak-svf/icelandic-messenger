@@ -361,6 +361,8 @@ pub enum NoticeKind {
     Text,
     Photo,
     File,
+    /// A shared Fljótið post: shown as a fixed sentence, with no text.
+    Post,
 }
 
 /// A new message to show after a push (0025).
@@ -372,7 +374,7 @@ pub struct Notice {
     pub seq: u64,
     pub sender: Person,
     pub kind: NoticeKind,
-    /// The text, or a file's caption.
+    /// The text, or a file's caption; none for a shared post.
     pub text: Option<String>,
     /// The sender's clock, in milliseconds.
     pub ts: u64,
@@ -401,6 +403,7 @@ impl From<core::Notices> for Notices {
                         core::NoticeKind::Text => NoticeKind::Text,
                         core::NoticeKind::Photo => NoticeKind::Photo,
                         core::NoticeKind::File => NoticeKind::File,
+                        core::NoticeKind::Post => NoticeKind::Post,
                     },
                     text: n.text,
                     ts: n.ts,
@@ -532,6 +535,10 @@ pub enum Content {
     },
     /// The disappearing timer was set, or turned off.
     Timer { seconds: Option<u32> },
+    /// A Fljótið post shared here (0040): only its id. The card fetches
+    /// it with `shared_post` when it is on screen; the list's last line
+    /// and a notice use a fixed sentence.
+    Post { post_id: String },
 }
 
 impl From<core::Content> for Content {
@@ -568,6 +575,7 @@ impl From<core::Content> for Content {
                 devices: people(devices),
             },
             C::Timer { seconds } => Self::Timer { seconds },
+            C::Post { post_id } => Self::Post { post_id },
         }
     }
 }

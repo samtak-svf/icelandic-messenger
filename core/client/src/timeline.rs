@@ -62,6 +62,9 @@ pub enum Content {
     },
     /// The disappearing timer was set, or turned off.
     Timer { seconds: Option<u32> },
+    /// A Fljótið post shared here (0040): only its id. The app fetches the
+    /// post with `shared_post` when it shows it.
+    Post { post_id: String },
 }
 
 /// One emoji on an item: who put it there, and whether this account did.
@@ -262,10 +265,24 @@ pub(crate) fn fold(
             )?;
             vec![seq]
         }
+        body @ Body::Post { .. } => {
+            let detail = serde_json::to_string(body).expect("a body serializes");
+            insert(tx, group, seq, message("post", None, None, Some(detail)))?;
+            vec![seq]
+        }
         Body::Edit { target, text } => {
             let Some(t) = own_target(tx, group, &sender.account, target)? else {
                 return Ok(None);
             };
+            // A share has no text of its own to edit (0040).
+            let kind: String = tx.query_row(
+                "SELECT kind FROM timeline WHERE group_id = ?1 AND seq = ?2",
+                params![group, t as i64],
+                |r| r.get(0),
+            )?;
+            if kind == "post" {
+                return Ok(None);
+            }
             tx.execute(
                 "UPDATE timeline SET text = ?3, edited = 1 WHERE group_id = ?1 AND seq = ?2",
                 params![group, t as i64, text],
@@ -365,7 +382,7 @@ pub(crate) fn fold(
     if sender.account == me
         && matches!(
             envelope.body,
-            Body::Text { .. } | Body::Reply { .. } | Body::Media { .. }
+            Body::Text { .. } | Body::Reply { .. } | Body::Media { .. } | Body::Post { .. }
         )
     {
         advance(tx, group, me, seq)?;
@@ -563,6 +580,10 @@ pub(crate) fn items(
                     },
                     _ => return Err(ClientError::Protocol("a stored media row")),
                 },
+                "post" => match detail.as_deref().map(serde_json::from_str::<Body>) {
+                    Some(Ok(Body::Post { post_id })) => Content::Post { post_id },
+                    _ => return Err(ClientError::Protocol("a stored post row")),
+                },
                 "members" => {
                     let card: MembersCard = detail
                         .as_deref()
@@ -728,6 +749,7 @@ fn pending(
                 caption,
                 name: name.as_deref().and_then(file_name),
             },
+            Body::Post { post_id } => Content::Post { post_id },
             // Edits, deletes, reactions and receipts show once they are back.
             _ => continue,
         };
@@ -997,6 +1019,33 @@ mod tests {
             .try_write(|tx| crate::read::unread(tx, GROUP, "a"))
             .unwrap();
         assert_eq!(unread, 0);
+    }
+
+    /// A share is a row of its own with only the post's id; an edit has no
+    /// text to change on it, and a delete for everyone takes it away (0040).
+    #[test]
+    fn a_shared_post_is_its_id_and_cannot_be_edited() {
+        let mut fold = Fold::new();
+        let share = Body::Post {
+            post_id: "p_1".into(),
+        };
+        assert_eq!(fold.apply(("b", "b1"), "s", share), Some(vec![1]));
+        let shown = |fold: &mut Fold| fold.items()[0].content.clone();
+        assert_eq!(
+            shown(&mut fold),
+            Content::Post {
+                post_id: "p_1".into()
+            }
+        );
+        let edit = Body::Edit {
+            target: "s".into(),
+            text: "annað".into(),
+        };
+        assert_eq!(fold.apply(("b", "b1"), "e", edit), None);
+        assert!(!fold.items()[0].edited);
+        let delete = Body::Delete { target: "s".into() };
+        assert_eq!(fold.apply(("b", "b1"), "d", delete), Some(vec![1]));
+        assert_eq!(shown(&mut fold), Content::Deleted);
     }
 
     #[test]

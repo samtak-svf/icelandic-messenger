@@ -102,6 +102,12 @@ pub enum Body {
     Typing {
         active: bool,
     },
+    /// A Fljótið post shared into the conversation (0040): its id and
+    /// nothing else. The reader fetches the post when it shows it, so a
+    /// post its author deleted is gone here too.
+    Post {
+        post_id: String,
+    },
     /// A kind this client does not know. Never encoded.
     #[serde(skip)]
     Unknown {
@@ -123,6 +129,7 @@ const KNOWN_KINDS: &[&str] = &[
     "disappearing",
     "receipt",
     "typing",
+    "post",
 ];
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
@@ -160,6 +167,12 @@ impl Envelope {
     }
 
     pub fn decode(bytes: &[u8]) -> Result<Self, EnvelopeError> {
+        Self::decode_known(bytes, KNOWN_KINDS)
+    }
+
+    /// `decode` by a reader that knows only `known`; a test plays an
+    /// older client with it.
+    fn decode_known(bytes: &[u8], known: &[&str]) -> Result<Self, EnvelopeError> {
         let malformed = |error: serde_json::Error| EnvelopeError::Malformed(error.to_string());
         let mut object: Map<String, Value> = serde_json::from_slice(bytes).map_err(malformed)?;
         let header: Header =
@@ -167,7 +180,7 @@ impl Envelope {
         if header.v > VERSION {
             return Err(EnvelopeError::UnsupportedVersion(header.v));
         }
-        let body = if KNOWN_KINDS.contains(&header.kind.as_str()) {
+        let body = if known.contains(&header.kind.as_str()) {
             for key in ["v", "id", "ts"] {
                 object.remove(key);
             }
@@ -230,6 +243,9 @@ mod tests {
                 up_to: String::new(),
             },
             Body::Typing { active: false },
+            Body::Post {
+                post_id: String::new(),
+            },
         ];
         let kinds: Vec<String> = samples
             .iter()
@@ -329,6 +345,50 @@ mod tests {
         assert_eq!(old, OldBody::Text { text: "hæ".into() });
     }
 
+    /// A share holds the post's id and no other field: a copy of its text
+    /// or its author's name would outlive a deletion (0040).
+    #[test]
+    fn a_shared_post_carries_only_its_id() {
+        let envelope = Envelope {
+            id: "m1".into(),
+            ts: 7,
+            body: Body::Post {
+                post_id: "p_1".into(),
+            },
+        };
+        let value: Value = serde_json::from_slice(&envelope.encode().unwrap()).unwrap();
+        assert_eq!(
+            value,
+            serde_json::json!({"v": 1, "id": "m1", "ts": 7, "kind": "post", "postId": "p_1"})
+        );
+    }
+
+    /// A reader from before 0040 decodes a share to `Unknown`, which the
+    /// apps skip, never to an error that would stall the conversation.
+    #[test]
+    fn a_reader_without_the_kind_skips_a_shared_post() {
+        let shared = Envelope {
+            id: "m".into(),
+            ts: 1,
+            body: Body::Post {
+                post_id: "p_1".into(),
+            },
+        }
+        .encode()
+        .unwrap();
+        let older: Vec<&str> = KNOWN_KINDS
+            .iter()
+            .copied()
+            .filter(|k| *k != "post")
+            .collect();
+        assert_eq!(
+            Envelope::decode_known(&shared, &older).unwrap().body,
+            Body::Unknown {
+                kind: "post".into()
+            }
+        );
+    }
+
     #[test]
     fn older_version_is_read() {
         let decoded = decode_str(r#"{"v":0,"id":"m","ts":1,"kind":"typing","active":true}"#);
@@ -401,6 +461,7 @@ mod tests {
             proptest::option::of(any::<u32>()).prop_map(|seconds| Body::Disappearing { seconds }),
             s().prop_map(|up_to| Body::Receipt { up_to }),
             any::<bool>().prop_map(|active| Body::Typing { active }),
+            s().prop_map(|post_id| Body::Post { post_id }),
         ]
     }
 

@@ -7,7 +7,8 @@ import XCTest
 final class NoticesTests: XCTestCase {
     private let anna = person("a2", "Anna Sigurðardóttir")
     private let unnamed = person("a3")
-    private let labels = NoticeLabels(unnamed: "Ónefnd", alone: "Bara þú", photo: "Mynd", file: "Skrá", post: "Deild færsla")
+    private let labels = NoticeLabels(
+        unnamed: "Ónefnd", alone: "Bara þú", photo: "Mynd", file: "Skrá", post: "Deild færsla")
 
     private func notice(
         _ conversation: String,

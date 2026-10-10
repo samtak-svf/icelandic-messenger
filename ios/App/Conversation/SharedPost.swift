@@ -28,7 +28,12 @@ struct SharedCard: View {
                 switch model.posts[postId] {
                 case .found(let post):
                     if let onPost {
-                        Button { onPost(postId) } label: { found(post) }.buttonStyle(.plain)
+                        Button {
+                            onPost(postId)
+                        } label: {
+                            found(post)
+                        }
+                        .buttonStyle(.plain)
                     } else {
                         found(post)
                     }

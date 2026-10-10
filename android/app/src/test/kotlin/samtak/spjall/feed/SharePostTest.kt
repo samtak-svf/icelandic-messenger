@@ -44,7 +44,11 @@ class SharePostTest {
             val done = mutableListOf<Int>()
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.done.collect(done::add) }
             // A post comes from no conversation, so every one is offered.
-            assertEquals(listOf("c1", "c2", "c3"), model.state.value.conversations.map { it.id })
+            assertEquals(
+                listOf("c1", "c2", "c3"),
+                model.state.value.conversations
+                    .map { it.id },
+            )
             model.toggle("c3")
             model.toggle("c1")
             model.send()

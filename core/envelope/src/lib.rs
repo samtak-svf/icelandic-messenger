@@ -107,6 +107,10 @@ pub enum Body {
     /// post its author deleted is gone here too.
     Post {
         post_id: String,
+        /// Shared again by `forward` from another conversation (0041).
+        /// Absent means false.
+        #[serde(default, skip_serializing_if = "is_false")]
+        forwarded: bool,
     },
     /// A kind this client does not know. Never encoded.
     #[serde(skip)]
@@ -245,6 +249,7 @@ mod tests {
             Body::Typing { active: false },
             Body::Post {
                 post_id: String::new(),
+                forwarded: false,
             },
         ];
         let kinds: Vec<String> = samples
@@ -345,8 +350,9 @@ mod tests {
         assert_eq!(old, OldBody::Text { text: "hæ".into() });
     }
 
-    /// A share holds the post's id and no other field: a copy of its text
-    /// or its author's name would outlive a deletion (0040).
+    /// A share holds the post's id and no other field but the forward
+    /// mark: a copy of its text or its author's name would outlive a
+    /// deletion (0040).
     #[test]
     fn a_shared_post_carries_only_its_id() {
         let envelope = Envelope {
@@ -354,12 +360,27 @@ mod tests {
             ts: 7,
             body: Body::Post {
                 post_id: "p_1".into(),
+                forwarded: false,
             },
         };
         let value: Value = serde_json::from_slice(&envelope.encode().unwrap()).unwrap();
         assert_eq!(
             value,
             serde_json::json!({"v": 1, "id": "m1", "ts": 7, "kind": "post", "postId": "p_1"})
+        );
+        // Shared again by a forward (0041): the mark, and still nothing
+        // of the post.
+        let forwarded = Envelope {
+            body: Body::Post {
+                post_id: "p_1".into(),
+                forwarded: true,
+            },
+            ..envelope
+        };
+        let value: Value = serde_json::from_slice(&forwarded.encode().unwrap()).unwrap();
+        assert_eq!(
+            value,
+            serde_json::json!({"v": 1, "id": "m1", "ts": 7, "kind": "post", "postId": "p_1", "forwarded": true})
         );
     }
 
@@ -372,6 +393,7 @@ mod tests {
             ts: 1,
             body: Body::Post {
                 post_id: "p_1".into(),
+                forwarded: false,
             },
         }
         .encode()
@@ -461,7 +483,7 @@ mod tests {
             proptest::option::of(any::<u32>()).prop_map(|seconds| Body::Disappearing { seconds }),
             s().prop_map(|up_to| Body::Receipt { up_to }),
             any::<bool>().prop_map(|active| Body::Typing { active }),
-            s().prop_map(|post_id| Body::Post { post_id }),
+            (s(), any::<bool>()).prop_map(|(post_id, forwarded)| Body::Post { post_id, forwarded }),
         ]
     }
 

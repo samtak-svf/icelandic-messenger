@@ -486,6 +486,10 @@
         {
           "file": "core/client/tests/sync.rs",
           "name": "a_shared_post_carries_only_its_id_and_shows_what_the_server_holds_now"
+        },
+        {
+          "file": "core/client/tests/sync.rs",
+          "name": "a_forwarded_share_is_shared_again_by_its_id_and_a_reply_quotes_it"
         }
       ]
     }

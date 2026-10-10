@@ -73,6 +73,7 @@ impl<T: Transport> Client<T> {
             conversation,
             Body::Post {
                 post_id: post.into(),
+                forwarded: false,
             },
         )
     }

@@ -78,7 +78,8 @@ pub enum Unforwardable {
     Disappearing,
     /// It was deleted for everyone.
     Deleted,
-    /// Not a text or a file this device has: a card, or nothing.
+    /// Not a text, a file or a shared post this device has: a card, or
+    /// nothing.
     NotAMessage,
 }
 
@@ -201,7 +202,8 @@ impl From<envelope::Body> for Body {
             B::Disappearing { seconds } => Self::Disappearing { seconds },
             B::Receipt { up_to } => Self::Receipt { up_to },
             B::Typing { active } => Self::Typing { active },
-            B::Post { post_id } => Self::Post { post_id },
+            // The forward mark reaches the apps on `Item`, as for text.
+            B::Post { post_id, .. } => Self::Post { post_id },
             B::Unknown { kind } => Self::Unknown { kind },
         }
     }
@@ -249,7 +251,10 @@ impl From<Body> for envelope::Body {
             B::Disappearing { seconds } => Self::Disappearing { seconds },
             B::Receipt { up_to } => Self::Receipt { up_to },
             B::Typing { active } => Self::Typing { active },
-            B::Post { post_id } => Self::Post { post_id },
+            B::Post { post_id } => Self::Post {
+                post_id,
+                forwarded: false,
+            },
             B::Unknown { kind } => Self::Unknown { kind },
         }
     }

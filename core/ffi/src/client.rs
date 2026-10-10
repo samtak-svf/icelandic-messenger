@@ -509,6 +509,10 @@ pub struct Quote {
     pub envelope_id: String,
     pub sender: Option<Person>,
     pub text: Option<String>,
+    /// The post, when the reply answers a shared post (0040); `text` is
+    /// then none, and the app draws the quote as the share's card.
+    #[uniffi(default = None)]
+    pub post_id: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, uniffi::Enum)]
@@ -551,6 +555,7 @@ impl From<core::Content> for Content {
                     envelope_id: quote.envelope_id,
                     sender: quote.sender.map(Into::into),
                     text: quote.text,
+                    post_id: quote.post_id,
                 }),
             },
             C::Media {

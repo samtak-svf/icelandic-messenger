@@ -899,7 +899,7 @@ impl<T: Transport> Client<T> {
                 "typing goes by typing(), never stored",
             ));
         }
-        if matches!(&body, Body::Post { post_id } if !is_id(post_id)) {
+        if matches!(&body, Body::Post { post_id, .. } if !is_id(post_id)) {
             return Err(ClientError::Invalid("post id"));
         }
         let group = group_id(conversation).ok_or(ClientError::UnknownConversation)?;

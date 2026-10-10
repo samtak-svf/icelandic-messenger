@@ -152,4 +152,3 @@ final class ConversationsModelTests: XCTestCase {
         XCTAssertEqual(model.found?.query, "Anna")
     }
 }
-

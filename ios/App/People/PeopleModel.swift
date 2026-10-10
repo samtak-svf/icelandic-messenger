@@ -121,7 +121,7 @@ final class PeopleModel {
     }
 
     /// A directory page: a screenful and some.
-    private static let page: UInt32 = 30
+    private nonisolated static let page: UInt32 = 30
 
     /// Tries the action that failed again.
     func retry() async {

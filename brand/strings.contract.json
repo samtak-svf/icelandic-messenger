@@ -582,6 +582,15 @@
       "surfaces": ["android", "ios", "backend"],
       "description": "The only permitted statement about where data lives (docs/decisions/0001).",
       "claim": "residency"
+    },
+    "app_version": {
+      "surfaces": ["android", "ios"],
+      "description": "The app's and the core's version, at the foot of the settings, for a bug report.",
+      "placeholders": {
+        "version": "string",
+        "build": "string",
+        "core": "string"
+      }
     }
   }
 }

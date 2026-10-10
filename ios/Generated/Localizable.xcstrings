@@ -1560,6 +1560,18 @@
           }
         }
       }
+    },
+    "app_version": {
+      "comment": "The app's and the core's version, at the foot of the settings, for a bug report.",
+      "extractionState": "manual",
+      "localizations": {
+        "is": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Útgáfa %1$@ (%2$@), kjarni %3$@"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

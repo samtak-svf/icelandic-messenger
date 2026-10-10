@@ -272,4 +272,6 @@
     <string name="device_revoke_confirm">Aftengja tækið? Þá getur það hvorki sent né tekið við skilaboðum.</string>
     <!-- The only permitted statement about where data lives (docs/decisions/0001). -->
     <string name="residency_claim">Gögnin eru geymd varanlega innan ESB; unnin á netkerfi Cloudflare.</string>
+    <!-- The app's and the core's version, at the foot of the settings, for a bug report. -->
+    <string name="app_version">Útgáfa %1$s (%2$s), kjarni %3$s</string>
 </resources>

@@ -143,5 +143,6 @@
   "device_added": "Skráð {date}",
   "device_revoke": "Aftengja",
   "device_revoke_confirm": "Aftengja tækið? Þá getur það hvorki sent né tekið við skilaboðum.",
-  "residency_claim": "Gögnin eru geymd varanlega innan ESB; unnin á netkerfi Cloudflare."
+  "residency_claim": "Gögnin eru geymd varanlega innan ESB; unnin á netkerfi Cloudflare.",
+  "app_version": "Útgáfa {version} ({build}), kjarni {core}"
 }

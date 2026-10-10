@@ -18,7 +18,8 @@ final class ProblemTests: XCTestCase {
         XCTAssertEqual(line, localized("problem_request_id", "req-7f3a"))
         XCTAssertTrue(line?.contains("req-7f3a") ?? false)
         XCTAssertNil(ProblemCard.requestIdLine(.generic()))
-        XCTAssertNil(ProblemCard.requestIdLine(Problem(CoreError.Refused(status: 500, code: "internal", requestId: nil))))
+        let older = CoreError.Refused(status: 500, code: "internal", requestId: nil)
+        XCTAssertNil(ProblemCard.requestIdLine(Problem(older)))
         XCTAssertNil(ProblemCard.requestIdLine(.unreachable))
         XCTAssertNil(ProblemCard.requestIdLine(Problem(CoreError.Unreachable(detail: "timeout"))))
     }

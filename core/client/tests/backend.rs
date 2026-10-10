@@ -679,6 +679,16 @@ fn devices_talk_through_the_worker() {
     let wall = h1.client.wall(&g1.account, None, 50).unwrap();
     assert_eq!(wall.posts[0].post_id, post.post_id);
 
+    // g is in h's directory by name, without posting first (0036).
+    let name = g1.client.me().unwrap().name.unwrap();
+    let found = h1.client.directory(Some(&name), None, 50).unwrap();
+    assert!(
+        found
+            .people
+            .iter()
+            .any(|p| p.account == g1.account && p.verified)
+    );
+
     // From the post's author to an encrypted 1:1, no link and nothing
     // shared before.
     assert!(h1.client.profile(&g1.account).unwrap().verified);

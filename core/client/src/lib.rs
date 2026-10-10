@@ -156,6 +156,10 @@ pub struct Message {
 
 /// What changed, for the app to show.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[expect(
+    clippy::large_enum_variant,
+    reason = "an event lives for one sync round; boxing the message would only move the bytes"
+)]
 pub enum Event {
     Message(Message),
     Membership {

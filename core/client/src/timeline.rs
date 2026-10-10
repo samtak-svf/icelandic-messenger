@@ -753,6 +753,9 @@ fn pending(
     Ok(items)
 }
 
+/// kind, text, detail, deleted, expires_at of the row a forward reads.
+type ForwardRow = (String, Option<String>, Option<String>, bool, Option<i64>);
+
 /// The content of the message at `seq` a forward copies: its text as it
 /// reads now (the last edit, a reply without its quote), or its file.
 /// Refused under a timer, deleted, or for anything but a message (0041).
@@ -761,7 +764,7 @@ pub(crate) fn forwardable(
     group: &[u8],
     seq: u64,
 ) -> Result<Forwardable, ClientError> {
-    let row: Option<(String, Option<String>, Option<String>, bool, Option<i64>)> = tx
+    let row: Option<ForwardRow> = tx
         .query_row(
             "SELECT kind, text, detail, deleted, expires_at FROM timeline
              WHERE group_id = ?1 AND seq = ?2",

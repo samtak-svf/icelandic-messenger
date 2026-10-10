@@ -53,6 +53,6 @@ private func line(_ notice: Notice, labels: NoticeLabels) -> String {
     case .text: notice.text ?? ""
     case .photo: notice.text ?? labels.photo
     case .file: notice.text ?? labels.file
-    case .post: notice.text ?? ""
+    case .post: labels.post
     }
 }

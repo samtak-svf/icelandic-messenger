@@ -221,7 +221,6 @@ final class ConversationModel {
 
     /// Fetches the shared post `postId` for its card, once; a failed one can be asked for again.
     func showPost(_ postId: String) async {
-        if !postId.isEmpty { return }
         switch posts[postId] {
         case .loading, .found, .gone: return
         case .failed, nil: break

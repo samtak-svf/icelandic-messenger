@@ -39,7 +39,7 @@ func lastLine(_ item: Item, group: Bool = true) -> String {
         localized("message_deleted")
     case .post:
         // Never the post's text or author: the list shows what the store holds (decision 0040).
-        ""
+        localized("post_shared")
     case .members(let added, let removed, let devices):
         if !added.isEmpty {
             localized("member_added_card", names(added))

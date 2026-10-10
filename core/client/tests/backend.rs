@@ -656,9 +656,9 @@ fn devices_talk_through_the_worker() {
     let mut h1 = Phone::signed_in(Person::Google(&format!("interop-{run}-h")), None);
     assert!(!g1.client.me().unwrap().verified);
     let url = g1.client.begin_link(Provider::Kenni).unwrap();
-    g1.client
-        .complete_link(&browse(&url, &kennitala(run, 5)))
-        .unwrap();
+    // The registry name comes with it, as Kenni gives one.
+    let named = format!("{}&x_name=Gestur%20{run}", kennitala(run, 5));
+    g1.client.complete_link(&browse(&url, &named)).unwrap();
     assert!(g1.client.me().unwrap().verified);
     let url = h1.client.begin_link(Provider::Kenni).unwrap();
     assert!(matches!(

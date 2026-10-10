@@ -1,6 +1,6 @@
 # 0038. The name search matches the start of a word
 
-- Status: accepted; implemented in the backend (#PR)
+- Status: accepted; implemented in the backend (#156)
 - Date: 2026-10-10
 - Decided by: the maintainer, choosing it from a comparison with an established messenger
 - Amends: [0036](0036-everyone-signed-in-is-in-the-picker.md) (the search matched any

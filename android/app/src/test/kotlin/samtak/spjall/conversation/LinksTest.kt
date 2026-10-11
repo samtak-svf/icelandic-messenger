@@ -34,6 +34,7 @@ class LinksTest {
             listOf("https://ruv.is" to "https://ruv.is", "https://ruv.is" to "https://ruv.is"),
             found("„https://ruv.is“, sagði hún \"https://ruv.is\""),
         )
+        assertEquals(listOf("https://ruv.is" to "https://ruv.is"), found("‚https://ruv.is‘"))
     }
 
     @Test

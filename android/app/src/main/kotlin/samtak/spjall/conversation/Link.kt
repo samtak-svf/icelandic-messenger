@@ -171,6 +171,7 @@ private val CLOSERS =
         '”' to '“',
         '“' to '„',
         '’' to '‘',
+        '‘' to '‚',
         '»' to '«',
     )
 private val UNDERLINE = SpanStyle(textDecoration = TextDecoration.Underline)

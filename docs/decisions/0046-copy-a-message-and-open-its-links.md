@@ -35,7 +35,8 @@
   the menu, on a link too.
 - The link keeps the bubble's text colour and is told apart by its underline, so the contrast
   pairs of `brand/contrast-pairs.json` still hold.
-- The screen reader reads the link as a link, and opening it is an action on the bubble.
+- The screen reader reads the bubble as one element (0022), so opening each link is an action
+  on it: "Opna" and the link as written.
 
 ## Why
 

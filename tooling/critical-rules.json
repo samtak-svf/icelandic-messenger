@@ -476,7 +476,7 @@
     {
       "id": "shared-post-carries-only-its-id",
       "domain": "privacy",
-      "decision": "0040",
+      "decision": "0044",
       "rule": "A post shared under 0040 reads as its id alone: no copy of its text or its author's name in the message, the list's last line or a notice, nothing fetches it, and nothing sends or forwards a new one (0044).",
       "tests": [
         {

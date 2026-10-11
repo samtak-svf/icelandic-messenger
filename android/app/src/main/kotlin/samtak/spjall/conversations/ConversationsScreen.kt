@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -75,29 +74,38 @@ fun ConversationsScreen(
                     if (notificationsOff) NotificationsOff(actions::notificationSettings)
                 }
             }
-            if (state.nothingFound) {
-                NoneFound()
-            } else if (!state.searched && state.loaded && state.conversations.isEmpty()) {
-                // Everyone signed in is in the picker (decisions 0036, 0043): people can be found, not only invited.
-                EmptyState(
-                    AppIcons.Chat,
-                    stringResource(R.string.conversations_empty),
-                    action = stringResource(R.string.invite),
-                    onAction = actions::invite,
-                    secondary = stringResource(R.string.find_people),
-                    onSecondary = actions::newConversation,
-                )
-            }
-            val reduce = LocalReduceMotion.current
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                if (state.placeholders) {
-                    item(key = "placeholders") { PlaceholderRows(PlaceholderKind.Conversation) }
-                } else if (state.searched) {
-                    state.found?.let { results(it, state.typing, actions, reduce) }
-                } else {
-                    conversationRows(state.conversations, state.typing, actions, reduce)
-                }
-            }
+            Rows(state, actions)
+        }
+    }
+}
+
+/** The rows, or what stands in for them: grey rows until the first read, then the empty state. */
+@Composable
+private fun Rows(
+    state: ConversationsViewModel.State,
+    actions: ConversationsActions,
+) {
+    if (state.nothingFound) {
+        NoneFound()
+    } else if (!state.searched && state.loaded && state.conversations.isEmpty()) {
+        // Everyone signed in is in the picker (decisions 0036, 0043): people can be found, not only invited.
+        EmptyState(
+            AppIcons.Chat,
+            stringResource(R.string.conversations_empty),
+            action = stringResource(R.string.invite),
+            onAction = actions::invite,
+            secondary = stringResource(R.string.find_people),
+            onSecondary = actions::newConversation,
+        )
+    }
+    val reduce = LocalReduceMotion.current
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        if (state.placeholders) {
+            item(key = "placeholders") { PlaceholderRows(PlaceholderKind.Conversation) }
+        } else if (state.searched) {
+            state.found?.let { results(it, state.typing, actions, reduce) }
+        } else {
+            conversationRows(state.conversations, state.typing, actions, reduce)
         }
     }
 }
@@ -160,22 +168,6 @@ private fun ConnectionLine(connection: Connection) {
         color = Palette.mutedFg,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 6.dp),
     )
-}
-
-/** The empty picker points at the invite link (decision 0022). */
-@Composable
-fun InviteHint(
-    text: String,
-    onInvite: () -> Unit,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(text = text, style = MaterialTheme.typography.bodyLarge, color = Palette.fg)
-        Button(onClick = onInvite) { Text(stringResource(R.string.invite)) }
-    }
 }
 
 @Composable

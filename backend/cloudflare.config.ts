@@ -88,12 +88,11 @@ export default defineConfig(({ mode }) => ({
       // a brake on abuse, not an exact quota. PUBLIC_LIMIT is per address on
       // the routes a person reaches before signing in; CLAIM_LIMIT is per
       // account on key-package claims, which spend another account's
-      // packages. POST_LIMIT is per account on posts and replies to Fljótið
-      // (decision 0034); PHOTO_LIMIT is per account on profile photo uploads
-      // (decision 0039). A namespace is unique within the Cloudflare account.
+      // packages. PHOTO_LIMIT is per account on profile photo uploads
+      // (decision 0039). A namespace is unique within the Cloudflare account;
+      // 1003 was Fljótið's (decision 0034, removed by 0044) and is not reused.
       PUBLIC_LIMIT: bindings.rateLimit({ namespace: "1001", simple: { limit: 30, period: 60 } }),
       CLAIM_LIMIT: bindings.rateLimit({ namespace: "1002", simple: { limit: 120, period: 60 } }),
-      POST_LIMIT: bindings.rateLimit({ namespace: "1003", simple: { limit: 20, period: 60 } }),
       PHOTO_LIMIT: bindings.rateLimit({ namespace: "1004", simple: { limit: 10, period: 60 } }),
       // Secrets, set by `node tooling/worker-secrets.mjs`, never in this file:
       //   KENNITALA_HMAC_KEY   the key of the kennitala HMAC (decisions 0014, 0019)

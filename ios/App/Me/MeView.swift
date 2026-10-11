@@ -33,8 +33,9 @@ struct MeView: View {
                     // Every post here is the person's own: their name leads back here.
                     PostList(
                         model: wall, empty: "wall_empty", emptyIcon: "person", onAuthor: { _ in },
-                        onReplies: onReplies)
-                        .background(BrandTokens.Colors.surface)
+                        onReplies: onReplies
+                    )
+                    .background(BrandTokens.Colors.surface)
                 }
             }
         }

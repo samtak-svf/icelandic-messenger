@@ -32,7 +32,8 @@ struct MeView: View {
                     }
                     // Every post here is the person's own: their name leads back here.
                     PostList(
-                        model: wall, empty: "wall_empty", emptyIcon: "person", onAuthor: { _ in }, onReplies: onReplies)
+                        model: wall, empty: "wall_empty", emptyIcon: "person", onAuthor: { _ in },
+                        onReplies: onReplies)
                         .background(BrandTokens.Colors.surface)
                 }
             }
@@ -64,9 +65,7 @@ struct MeView: View {
             }
             if let me = model.me {
                 HStack(alignment: .top) {
-                    Who(
-                        name: me.name, verified: me.verified, photo: me.photoOf, picked: $picked,
-                        enabled: !model.busy)
+                    Who(me: me, picked: $picked, enabled: !model.busy)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Button(action: onSettings) {
                         Image(systemName: "gearshape")
@@ -93,20 +92,21 @@ struct MeView: View {
 /// The photo, or the dark circle with the initials; the name in capitals, and whether Kenni vouched for it.
 /// A tap on the circle opens the photo picker, as the words under it do (decision 0043).
 private struct Who: View {
-    let name: String?
-    let verified: Bool
-    let photo: PhotoOf?
+    let me: Me
     @Binding var picked: PhotosPickerItem?
     let enabled: Bool
+
+    private var name: String? { me.name }
+    private var verified: Bool { me.verified }
 
     var body: some View {
         HStack(spacing: 14) {
             PhotosPicker(selection: $picked, matching: .images) {
-                Avatar(name: name, kind: .me, size: 72, photo: photo)
+                Avatar(name: name, kind: .me, size: 72, photo: me.photoOf)
             }
             .buttonStyle(.plain)
             .disabled(!enabled)
-            .accessibilityLabel(Text(photo == nil ? "photo_choose" : "photo_change"))
+            .accessibilityLabel(Text(me.photo == nil ? "photo_choose" : "photo_change"))
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     if let name {

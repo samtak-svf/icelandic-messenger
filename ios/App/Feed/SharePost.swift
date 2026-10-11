@@ -6,13 +6,17 @@ extension PickModel {
     /// each gets one message that carries the post's id and nothing else, never its text or author.
     /// A post comes from no conversation, so every one it can send into is offered. The post shows at the top.
     static func sharing(_ postId: String, account: Account, live: Live) -> PickModel {
-        PickModel(account: account, live: live, preview: { account in
-            // Shown as the server holds it now, as the card in the conversation will be.
-            switch try account.sharedPost(postId) {
-            case .found(let post): return Outgoing.post(post)
-            case .gone: return Outgoing.postGone
+        PickModel(
+            account: account,
+            live: live,
+            preview: { account in
+                // Shown as the server holds it now, as the card in the conversation will be.
+                switch try account.sharedPost(postId) {
+                case .found(let post): return Outgoing.post(post)
+                case .gone: return Outgoing.postGone
+                }
             }
-        }) { account, to in
+        ) { account, to in
             _ = try account.sharePost(to, postId: postId)
         }
     }

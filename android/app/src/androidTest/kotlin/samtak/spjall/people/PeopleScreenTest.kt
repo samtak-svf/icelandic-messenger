@@ -1,5 +1,6 @@
 package samtak.spjall.people
 
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -9,7 +10,7 @@ import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.isNotToggleable
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
@@ -87,7 +88,7 @@ class PeopleScreenTest {
         show(PeopleViewModel.State(people = people, loaded = true))
         compose.onNodeWithText(text(R.string.contact_action)).assertDoesNotExist()
         compose.onNodeWithText(text(R.string.person_unnamed)).assertIsDisplayed()
-        compose.onNode(hasText("Anna") and hasClickAction()).assert(isNotToggleable()).performClick()
+        compose.onNode(hasText("Anna") and hasClickAction()).assert(!isToggleable()).performClick()
         assertEquals(listOf("open a2"), calls)
     }
 

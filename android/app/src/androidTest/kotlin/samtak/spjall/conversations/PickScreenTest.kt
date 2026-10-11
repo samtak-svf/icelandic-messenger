@@ -160,9 +160,9 @@ class PickScreenTest {
     @Test
     fun thePostBeingSharedShowsWithItsAuthor() {
         val post =
-            Post("p1", Person("a4", "Dóra", false), "Fundur í kvöld", 0uL, 0u, ReactionCounts(0u, 0u, 0u, 0u, 0u), null)
+            Post("p1", Person("a6", "Elín", false), "Fundur í kvöld", 0uL, 0u, ReactionCounts(0u, 0u, 0u, 0u, 0u), null)
         show(PickViewModel.State(conversations = conversations, loaded = true, outgoing = Outgoing.SharedPost(post)))
-        compose.onNodeWithText("Dóra", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Elín", substring = true).assertIsDisplayed()
         compose.onNodeWithText("Fundur í kvöld").assertIsDisplayed()
     }
 }

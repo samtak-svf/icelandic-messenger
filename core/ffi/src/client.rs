@@ -651,6 +651,7 @@ pub struct Item {
     /// When the server stored it, in milliseconds by its clock, never
     /// earlier than the item before (0048). None while it is being sent,
     /// and for rows stored before the server gave it.
+    #[uniffi(default = None)]
     pub received_at: Option<u64>,
 }
 

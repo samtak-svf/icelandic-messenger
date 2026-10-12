@@ -165,6 +165,10 @@ final class SquarePhotoTests: XCTestCase {
             context.fill(CGRect(x: 0, y: 0, width: 200, height: 100))
         }
         let pixels = try XCTUnwrap(read(original)).dataProvider?.data as Data?
+        let before = try XCTUnwrap(CGImageSourceCreateWithURL(original as CFURL, nil))
+        let had = CGImageSourceCopyPropertiesAtIndex(before, 0, nil) as? [CFString: Any]
+        XCTAssertNotNil(had?[kCGImagePropertyGPSDictionary], "the photo had a location to lose")
+        XCTAssertEqual(had?[kCGImagePropertyOrientation] as? Int, 6, "the photo was written on its side")
         let stripped = withoutLocation(original)
         made.append(stripped)
         XCTAssertNotEqual(stripped, original)

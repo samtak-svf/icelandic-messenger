@@ -144,12 +144,24 @@ func withoutLocation(_ url: URL) -> URL {
     else { return url }
     let file = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     guard let destination = CGImageDestinationCreateWithURL(file as CFURL, type, 1, nil) else { return url }
-    // Leaving the GPS behind also drops the orientation, so it is set again from the source.
-    var options: [CFString: Any] = [kCGImageMetadataShouldExcludeGPS: true]
-    let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
-    if let orientation = properties?[kCGImagePropertyOrientation] {
-        options[kCGImageDestinationOrientation] = orientation
+    // The photo's own metadata goes with it whole, orientation included, less every GPS tag; ImageIO's
+    // kCGImageMetadataShouldExcludeGPS alone also lost the orientation.
+    guard let metadata = CGImageSourceCopyMetadataAtIndex(source, 0, nil),
+        let kept = CGImageMetadataCreateMutableCopy(metadata)
+    else { return url }
+    var gps: [String] = []
+    CGImageMetadataEnumerateTagsUsingBlock(metadata, nil, nil) { path, tag in
+        let namespace = CGImageMetadataTagCopyNamespace(tag) as String?
+        let name = CGImageMetadataTagCopyName(tag) as String? ?? ""
+        if namespace == kCGImageMetadataNamespaceExif as String && name.hasPrefix("GPS") {
+            gps.append(path as String)
+        }
+        return true
     }
+    for path in gps {
+        CGImageMetadataRemoveTagWithPath(kept, nil, path as CFString)
+    }
+    let options: [CFString: Any] = [kCGImageDestinationMetadata: kept, kCGImageDestinationMergeMetadata: false]
     var error: Unmanaged<CFError>?
     guard CGImageDestinationCopyImageSource(destination, source, options as CFDictionary, &error) else {
         try? FileManager.default.removeItem(at: file)

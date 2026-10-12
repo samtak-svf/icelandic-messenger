@@ -144,9 +144,14 @@ func withoutLocation(_ url: URL) -> URL {
     else { return url }
     let file = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     guard let destination = CGImageDestinationCreateWithURL(file as CFURL, type, 1, nil) else { return url }
-    let options = [kCGImageMetadataShouldExcludeGPS: true] as CFDictionary
+    // Leaving the GPS behind also drops the orientation, so it is set again from the source.
+    var options: [CFString: Any] = [kCGImageMetadataShouldExcludeGPS: true]
+    let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+    if let orientation = properties?[kCGImagePropertyOrientation] {
+        options[kCGImageDestinationOrientation] = orientation
+    }
     var error: Unmanaged<CFError>?
-    guard CGImageDestinationCopyImageSource(destination, source, options, &error) else {
+    guard CGImageDestinationCopyImageSource(destination, source, options as CFDictionary, &error) else {
         try? FileManager.default.removeItem(at: file)
         return url
     }

@@ -136,6 +136,24 @@ func squarePhoto(_ url: URL, side: Int) throws -> URL {
     return file
 }
 
+/// The photo at `url` without where it was taken (decision 0048), in a new temporary file of the same type:
+/// ImageIO copies its encoded data as it is and leaves the GPS metadata behind, so nothing is encoded again.
+/// A type it cannot copy so goes as it is, which the system picker has already stripped of location.
+func withoutLocation(_ url: URL) -> URL {
+    guard let source = CGImageSourceCreateWithURL(url as CFURL, nil), let type = CGImageSourceGetType(source)
+    else { return url }
+    let file = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    guard let destination = CGImageDestinationCreateWithURL(file as CFURL, type, 1, nil) else { return url }
+    let options = [kCGImageMetadataShouldExcludeGPS: true] as CFDictionary
+    var error: Unmanaged<CFError>?
+    guard CGImageDestinationCopyImageSource(destination, source, options, &error) else {
+        try? FileManager.default.removeItem(at: file)
+        return url
+    }
+    try? FileManager.default.removeItem(at: url)
+    return file
+}
+
 /// A photo the camera took, drawn upright into a new temporary JPEG of its pixels only (decision 0047): no
 /// EXIF, no location, nothing but the picture. Throws when it cannot be written.
 func cameraPhoto(_ image: UIImage) throws -> URL {

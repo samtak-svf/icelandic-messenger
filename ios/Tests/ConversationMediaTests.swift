@@ -171,4 +171,3 @@ final class ConversationMediaTests: XCTestCase {
         XCTAssertFalse(account.calls.contains { $0.hasPrefix("block") })
     }
 }
-

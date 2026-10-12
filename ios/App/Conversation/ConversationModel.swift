@@ -291,7 +291,11 @@ final class ConversationModel {
             live.sync()
             await load()
         } catch {
-            if attachment == nil { attachment = pending } else { try? FileManager.default.removeItem(atPath: pending.path) }
+            if attachment == nil {
+                attachment = pending
+            } else {
+                try? FileManager.default.removeItem(atPath: pending.path)
+            }
             if draft.isEmpty { draft = caption ?? "" }
             failed = { await self.send() }
             problem = Problem(error)

@@ -68,7 +68,7 @@ struct PeopleView: View {
         .navigationTitle(Text(model.group ? "new_group" : "new_conversation"))
         .navigationBarTitleDisplayMode(.inline)
         // A back button of the app's own in both modes (decision 0047): out of picking several back to
-        // one tap, otherwise out of the picker. Swiping from the edge still closes it.
+        // one tap, otherwise out of the picker. Swiping from the edge does the same.
         .toolbar(.visible, for: .navigationBar)
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -86,7 +86,9 @@ struct PeopleView: View {
                 .accessibilityLabel(Text("back"))
             }
         }
-        .background { SwipeBack().frame(width: 0, height: 0) }
+        .background {
+            SwipeBack(instead: model.group ? { _ = model.back() } : nil).frame(width: 0, height: 0)
+        }
         .safeAreaInset(edge: .bottom) {
             if model.group && !model.picked.isEmpty {
                 Button {

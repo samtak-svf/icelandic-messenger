@@ -8,6 +8,7 @@ struct PeopleView: View {
     /// The picker is opened to find someone, so the search field has focus at once.
     @State private var searching = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         List {
@@ -66,15 +67,26 @@ struct PeopleView: View {
         }
         .navigationTitle(Text(model.group ? "new_group" : "new_conversation"))
         .navigationBarTitleDisplayMode(.inline)
-        // Out of picking several back to one tap, not out of the picker.
-        .navigationBarBackButtonHidden(model.group)
+        // A back button of the app's own in both modes (decision 0047): out of picking several back to
+        // one tap, otherwise out of the picker. Swiping from the edge still closes it.
+        .toolbar(.visible, for: .navigationBar)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
-            if model.group {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("cancel") { model.single() }
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    if model.back() { dismiss() }
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(BrandTokens.Colors.fg)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("back"))
             }
         }
+        .background { SwipeBack().frame(width: 0, height: 0) }
         .safeAreaInset(edge: .bottom) {
             if model.group && !model.picked.isEmpty {
                 Button {

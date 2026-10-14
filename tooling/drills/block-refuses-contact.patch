@@ -1,8 +1,8 @@
 diff --git a/backend/src/blocks.ts b/backend/src/blocks.ts
 --- a/backend/src/blocks.ts
 +++ b/backend/src/blocks.ts
-@@ -67,7 +67,7 @@
-   if (!accounts.length) return [];
+@@ -66,7 +66,7 @@
+ ): Promise<string[]> {
    const { results } = await db(env)
      .prepare(
 -      `SELECT blocker_account_id AS accountId FROM blocks WHERE blocked_account_id = ?

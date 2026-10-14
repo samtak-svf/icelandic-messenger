@@ -64,7 +64,6 @@ export async function blockersAmong(
   account: string,
   accounts: string[],
 ): Promise<string[]> {
-  if (!accounts.length) return [];
   const { results } = await db(env)
     .prepare(
       `SELECT blocker_account_id AS accountId FROM blocks WHERE blocked_account_id = ?

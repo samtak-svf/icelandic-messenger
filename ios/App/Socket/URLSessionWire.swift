@@ -50,14 +50,12 @@ private final class WebSocketLink: NSObject, Link, URLSessionWebSocketDelegate, 
 
     func start() {
         task.resume()
-        receive()
-    }
-
-    func urlSession(
-        _ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?
-    ) {
-        on(.opened)
-        keepAlive()
+        task.sendPing { [self] error in
+            guard error == nil else { return finish() }
+            on(.opened)
+            receive()
+            keepAlive()
+        }
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {

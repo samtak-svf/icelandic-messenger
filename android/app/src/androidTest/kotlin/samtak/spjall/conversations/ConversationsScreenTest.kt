@@ -170,7 +170,20 @@ class ConversationsScreenTest {
     @Test
     fun anUnreadableLastRowIsListedInItsFixedLine() {
         val last =
-            Item(6uL, null, anna, false, 0uL, ItemStatus.SENT, Content.Unreadable("envelope/malformed"), false, emptyList(), 0u, null, false)
+            Item(
+                6uL,
+                null,
+                anna,
+                false,
+                0uL,
+                ItemStatus.SENT,
+                Content.Unreadable("envelope/malformed"),
+                false,
+                emptyList(),
+                0u,
+                null,
+                false,
+            )
         show(
             ConversationsViewModel.State(
                 conversations =

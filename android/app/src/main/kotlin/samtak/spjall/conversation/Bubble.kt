@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -53,6 +52,7 @@ private class Offer(
     val item: Item,
 ) {
     private val sent = item.seq != null && item.envelopeId != null
+
     // An unreadable row offers nothing: there is nothing in it to act on (0051).
     private val live = sent && item.content != Content.Deleted && item.content !is Content.Unreadable
     val reply = live
@@ -273,25 +273,6 @@ private fun Body(
         is Content.Members, is Content.Timer ->
             Text(text = lastLine(item), style = Type.bubble, color = foreground)
         is Content.Unreadable -> Unreadable(content.code, foreground)
-    }
-}
-
-/** A stored row the core cannot read: one fixed line and its code to quote (decision 0051). */
-@Composable
-private fun Unreadable(
-    code: String,
-    foreground: Color,
-) {
-    Column {
-        Text(
-            text = stringResource(R.string.item_unreadable),
-            style = Type.bubble,
-            fontStyle = FontStyle.Italic,
-            color = foreground,
-        )
-        SelectionContainer(modifier = Modifier.padding(top = 4.dp)) {
-            Text(text = stringResource(R.string.problem_local_code, code), style = Type.meta, color = foreground)
-        }
     }
 }
 

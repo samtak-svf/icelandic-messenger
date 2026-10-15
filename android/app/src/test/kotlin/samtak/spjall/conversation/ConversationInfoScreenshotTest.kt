@@ -114,10 +114,17 @@ class ConversationInfoScreenshotTest {
         timer: UInt? = null,
         shared: List<Item> = emptyList(),
         state: ConversationState = ConversationState.ACTIVE,
+        // Only a test that waits for its image decodes photos: a decode still running on Dispatchers.IO
+        // when the test ends runs into the next test's Robolectric setup and aborts the JVM.
+        decoded: Boolean = false,
     ) {
         val path = landscape()
         val conversation = Conversation("c1", state, members, null, 0u, timer, mute)
-        val ready = shared.filter { it.isPhoto() }.associate { it.seq!! to ConversationViewModel.Media.Ready(path) }
+        val ready =
+            shared.filter { decoded && it.isPhoto() }.associate {
+                it.seq!! to
+                    ConversationViewModel.Media.Ready(path)
+            }
         compose.setContent {
             SpjallTheme {
                 ConversationInfoScreen(
@@ -145,14 +152,14 @@ class ConversationInfoScreenshotTest {
 
     @Test
     fun aPerson() {
-        show(mute = Mute.Until(PAST + 3_600_000uL), timer = 86_400u, shared = sent)
+        show(mute = Mute.Until(PAST + 3_600_000uL), timer = 86_400u, shared = sent, decoded = true)
         compose.onRoot().captureRoboImage()
     }
 
     @Test
     @Config(qualifiers = "+night")
     fun aPersonAtNight() {
-        show(mute = Mute.Until(PAST + 3_600_000uL), timer = 86_400u, shared = sent)
+        show(mute = Mute.Until(PAST + 3_600_000uL), timer = 86_400u, shared = sent, decoded = true)
         compose.onRoot().captureRoboImage()
     }
 

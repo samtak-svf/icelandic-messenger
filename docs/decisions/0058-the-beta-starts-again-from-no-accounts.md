@@ -1,6 +1,6 @@
 # 0058. The beta starts again from no accounts
 
-- Status: accepted; implemented in the backend
+- Status: accepted; implemented in the backend (#250)
 - Date: 2026-10-15
 - Decided by: the maintainer, choosing a clean slate for the beta testers
 - Builds on: [0014](0014-accounts-devices-and-auth.md) (deleting an account),

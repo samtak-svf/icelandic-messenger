@@ -18,9 +18,10 @@
   conversation and as the list's last line. Nothing else can be done with the item.
 - **A store failure still fails the call** and shows its `Villukóði` (0049). Only decoding is
   softened.
-- **Every store a released core can leave behind is opened in a test.** For each schema
-  version a released core recorded (and the 0.18 variant of 14), a store built to that version is
-  opened and its conversation list and timeline read.
+- **Every store a released core can leave behind is opened in a test.** A store built to each
+  schema version (and to 0.18's variant of 14) must open to the same columns, indexes and
+  triggers as a new store. `migrations-freeze` (0050) keeps the released migrations equal to
+  today's, so this covers every store on a device.
 
 ## Why
 

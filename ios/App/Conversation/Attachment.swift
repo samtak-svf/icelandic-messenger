@@ -159,7 +159,8 @@ struct PhotoImage: View {
     let longest: CGFloat
 
     var body: some View {
-        Image(uiImage: image).resizable().scaledToFit().frame(maxWidth: longest, maxHeight: longest)
+        let size = fitted(image.size, longest: longest)
+        Image(uiImage: image).resizable().frame(width: size.width, height: size.height)
     }
 }
 

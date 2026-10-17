@@ -1,3 +1,4 @@
+import SpjallCore
 import XCTest
 
 @testable import Spjall

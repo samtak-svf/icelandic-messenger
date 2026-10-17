@@ -633,7 +633,7 @@ fn connect(path: &Path, key: &Key) -> rusqlite::Result<Connection> {
     // The key must be the first statement on the connection. Hex digits
     // only, so formatting it into the pragma cannot inject anything.
     connection.execute_batch(&format!("PRAGMA key = \"x'{}'\";", hex(key)))?;
-    cipher(&connection)?;
+    cipher(&connection, CIPHER_PROBES)?;
     connection.query_row("SELECT COUNT(*) FROM sqlite_master", [], |_| Ok(()))?;
     connection.busy_timeout(BUSY_TIMEOUT)?;
     connection.pragma_update(None, "journal_mode", "WAL")?;
@@ -641,12 +641,16 @@ fn connect(path: &Path, key: &Key) -> rusqlite::Result<Connection> {
     Ok(connection)
 }
 
-/// The cipher this SQLite was built with. SQLCipher answers `cipher_version`
-/// and SQLite3 Multiple Ciphers (the wasm32 build) answers `cipher`. Plain
-/// SQLite answers neither and ignores `PRAGMA key`, so the file would be
-/// written in plaintext without an error (0016): refuse it instead.
-fn cipher(connection: &Connection) -> rusqlite::Result<String> {
-    for pragma in ["PRAGMA cipher_version", "PRAGMA cipher"] {
+/// SQLCipher answers `cipher_version` and SQLite3 Multiple Ciphers (the
+/// wasm32 build) answers `cipher`. Plain SQLite answers neither.
+const CIPHER_PROBES: &[&str] = &["PRAGMA cipher_version", "PRAGMA cipher"];
+
+/// The cipher this SQLite was built with, from the first probe that answers.
+/// SQLite ignores a pragma it does not know, and plain SQLite ignores
+/// `PRAGMA key` the same way, so the file would be written in plaintext
+/// without an error (0016): refuse it instead.
+fn cipher(connection: &Connection, probes: &[&str]) -> rusqlite::Result<String> {
+    for pragma in probes {
         if let Some(name) = connection
             .query_row(pragma, [], |row| row.get(0))
             .optional()?
@@ -736,7 +740,23 @@ mod tests {
     fn the_store_is_opened_only_with_a_cipher() {
         let dir = tempfile::tempdir().unwrap();
         let store = Store::open(dir.path(), &KEY).unwrap();
-        assert!(!cipher(&store.connection).unwrap().is_empty());
+        assert!(!cipher(&store.connection, CIPHER_PROBES).unwrap().is_empty());
+    }
+
+    #[test]
+    fn a_sqlite_that_answers_no_probe_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = Store::open(dir.path(), &KEY).unwrap();
+        // An unknown pragma answers nothing, as both probes do on plain SQLite.
+        let unknown = "PRAGMA spjall_no_such_cipher";
+        let refused = cipher(&store.connection, &[unknown]).unwrap_err();
+        assert_eq!(
+            refused.sqlite_error_code(),
+            Some(rusqlite::ErrorCode::NotADatabase)
+        );
+        // A probe that answers nothing falls through to the next one.
+        let fallback = [unknown, CIPHER_PROBES[0]];
+        assert!(!cipher(&store.connection, &fallback).unwrap().is_empty());
     }
 
     #[test]

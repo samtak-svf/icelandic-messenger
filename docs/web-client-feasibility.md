@@ -1,9 +1,12 @@
 # Web client feasibility: the core in a browser
 
-Status: research note from a spike, 2026-10-17, revised after review the same day. It is not a
-decision and does not change v1 scope ([0009](decisions/0009-v1-scope.md)). A web client
-needs its own record before any product code. The end of this note sketches what those
-records would decide.
+Status: research note from a spike, 2026-10-17, revised after two reviews the same day. It
+is not a decision and does not change v1 scope ([0009](decisions/0009-v1-scope.md)). The path
+chosen from it is the roadmap epic
+[#309](https://github.com/samtak-svf/icelandic-messenger/issues/309): a social platform with
+an encrypted messenger, web first as a plain web app whose sign-in makes a session, not an
+MLS device, and encrypted chat in the browser last. Each step there needs its own record
+before code.
 
 ## Question
 
@@ -60,14 +63,14 @@ would make Node load the output as an ES module.
 Many messengers have a web client, but each one gives up something. They solve the
 problem in one of four ways:
 
-| Product          | Browser E2EE                                                                                                | How history and keys reach the browser                                                                                                                                                                                                                                                                                                                                                             |
-| ---------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Discord          | Text: no. Calls: yes ([DAVE](https://discord.com/blog/meet-dave-e2ee-for-audio-video), MLS in every client) | The browser has no encrypted history to keep. Call keys are ephemeral.                                                                                                                                                                                                                                                                                                                             |
-| Messenger        | Yes, by default since Dec 2023                                                                              | [Labyrinth](https://engineering.fb.com/wp-content/uploads/2023/12/theLabyrintHencryptedMessagestorageProtocol_12-6-2023.pdf): server-side encrypted history. A new device restores it with a PIN (HSM-backed) or a code from another device. Browsers are treated as "ephemeral devices". The JavaScript is checked by [Code Verify](https://engineering.fb.com/2022/03/10/security/code-verify/). |
-| WhatsApp Web     | Yes                                                                                                         | Since 2021 the browser is a linked device with its own identity. The phone transfers history to it, encrypted to it, and the link expires after inactivity. Also Code Verify.                                                                                                                                                                                                                      |
-| Signal           | No browser client, by choice                                                                                | An Electron desktop app linked by QR code. The server holds no history. Its SQLCipher key was in plaintext `config.json` until 2024 and is now behind the OS keychain ([write-up](https://cryptographycaffe.sandboxaq.com/posts/protecting-signal-desktop-keys/)).                                                                                                                                 |
-| Wire             | Yes (MLS, Rust core-crypto in wasm)                                                                         | An encrypted IndexedDB store, which is the design this note arrived at. [History is lost when browser data is cleared](https://support.wire.com/hc/en-us/articles/360000377138). The only mitigation is a manual backup file.                                                                                                                                                                      |
-| Element / Matrix | Yes (vodozemac in wasm)                                                                                     | A new login must be verified. It reads old messages only through a server-side encrypted key backup with a recovery key ([docs](https://ems-docs.element.io/books/element-support/page/verify-new-login)).                                                                                                                                                                                         |
+| Product          | Browser E2EE                                                                                                | How history and keys reach the browser                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Discord          | Text: no. Calls: yes ([DAVE](https://discord.com/blog/meet-dave-e2ee-for-audio-video), MLS in every client) | The browser has no encrypted history to keep. Call keys are ephemeral.                                                                                                                                                                                                                                                                                                                                                                                             |
+| Messenger        | Yes, by default since Dec 2023                                                                              | [Labyrinth](https://engineering.fb.com/wp-content/uploads/2023/12/theLabyrintHencryptedMessagestorageProtocol_12-6-2023.pdf): server-side encrypted history. A new device restores it with a PIN (HSM-backed) or a code from another device. Browsers are treated as "ephemeral devices". The JavaScript is checked by [Code Verify](https://engineering.fb.com/2022/03/10/security/code-verify/).                                                                 |
+| WhatsApp Web     | Yes                                                                                                         | Since 2021 the browser is a linked device with its own identity. The phone transfers history to it, encrypted to it, and the link expires after inactivity. Also Code Verify.                                                                                                                                                                                                                                                                                      |
+| Signal           | No browser client, by choice                                                                                | An Electron desktop app linked by QR code. Since 2025 the phone [transfers history](https://signal.org/blog/a-synchronized-start-for-linked-devices/) to a new linked device, and opt-in [Secure Backups](https://signal.org/blog/introducing-secure-backups/) keep an encrypted copy on the server. The desktop's SQLCipher key is behind the OS keychain since 2024 ([write-up](https://cryptographycaffe.sandboxaq.com/posts/protecting-signal-desktop-keys/)). |
+| Wire             | Yes (MLS, Rust core-crypto in wasm)                                                                         | Records in IndexedDB, encrypted with a WebCrypto key; this note's SQLite-in-OPFS is a different store (see core point 2). [History is lost when browser data is cleared](https://support.wire.com/hc/en-us/articles/360000377138). The only mitigation is a manual backup file.                                                                                                                                                                                    |
+| Element / Matrix | Yes (vodozemac in wasm)                                                                                     | Crypto state in IndexedDB. A new login must be verified. It reads old messages only through a server-side encrypted key backup with a recovery key ([docs](https://ems-docs.element.io/books/element-support/page/verify-new-login)).                                                                                                                                                                                                                              |
 
 The four patterns:
 
@@ -93,7 +96,11 @@ The hard part of a browser client is persistence and code delivery, not MLS.
 2. **Encryption at rest: sqlite3mc.** It keeps the store's code and its one-transaction
    decrypt-and-store ([0016](decisions/0016-one-encrypted-store-owned-by-the-core.md)).
    The cipher scheme would differ from the apps, but no file ever moves between a browser
-   and a phone.
+   and a phone. The alternative is what Wire and Element ship: records in IndexedDB,
+   encrypted with a non-extractable WebCrypto key. IndexedDB serves several tabs and needs
+   no C toolchain, but it gives up the store's SQL and its transactions. Which one wins is
+   measured in a real browser before the record
+   ([#297](https://github.com/samtak-svf/icelandic-messenger/issues/297)).
 3. **One thread, one connection.** sqlite-wasm-rs offers OPFS (`sahpool`, dedicated Worker
    only) and IndexedDB VFSes, and none of them supports several connections. `Store::reader`
    opens a second connection
@@ -106,11 +113,12 @@ The hard part of a browser client is persistence and code delivery, not MLS.
 4. **One clock, agreeing with SQL.** `spjall-client` reads `SystemTime` and `Instant`
    directly (`core/client/src/lib.rs:365`, `:1007`). A `Clock` owned by `Client` fixes
    that, and `web-time` is already in the wasm graph through openmls. The `UNEXPIRED` views
-   use SQLite's own `unixepoch()` (`core/store/src/lib.rs:605-609`), which the VFS serves on
-   wasm. The injected clock must agree with it, or expiry differs between read and purge.
+   use SQLite's own `unixepoch()` (`core/store/src/lib.rs:605-609`), as does `migrate()`
+   (`:659`), which the VFS serves on wasm. The injected clock must agree with it, or expiry differs between read and purge.
 5. **Files become bytes.** `Transport::upload` and `download` take `&Path`
    (`core/client/src/api.rs:62-72`), and `media.rs`, `photo.rs` and `account.rs:624` use
-   `std::fs`. On the web these must become bytes or an OPFS handle behind a seam. This is the
+   `std::fs`. `Client::forward` passes a media file's path on (`core/client/src/forward.rs:47`),
+   and `Client::open` derives the media directory from the store's path. On the web these must become bytes or an OPFS handle behind a seam. This is the
    largest core change.
 6. **Transport.** `Transport` is a blocking callback. A dedicated Worker could implement it
    with synchronous `XMLHttpRequest`, but given point 3 that is a spike convenience, not a
@@ -128,12 +136,13 @@ The hard part of a browser client is persistence and code delivery, not MLS.
   [0028](decisions/0028-removing-a-device-from-its-groups.md) its leaf stays in every
   group until a sibling device revokes it. Members keep encrypting to it, and the Inbox
   keeps a cursor for it. A non-phone device needs server-side inactivity expiry (Signal
-  unlinks a desktop after 30 days, WhatsApp after 14).
+  [unlinks](https://support.signal.org/hc/en-us/articles/360007320551) a linked device
+  after 45 days, WhatsApp after 14).
 - **History.** Under 0006 a new device sees only future messages. In a browser that means
   an empty client after every eviction. The cheapest of the four patterns that keeps
   history off the server is the linked device: the phone transfers history to the new
-  device, encrypted to its MLS key. The same transfer is also the "new phone" feature that
-  0006 leaves users without today.
+  device, encrypted to its MLS key. Signal shipped exactly this in 2025. The same transfer is
+  also the "new phone" feature that 0006 leaves users without today.
 
 ### Key custody and code delivery
 
@@ -154,36 +163,40 @@ than a phone, on both counts, and require a strict CSP and no third-party script
 
 ### In the backend
 
-- **Auth.** A browser `WebSocket` cannot send `Authorization`. The bearer regex is at
-  `backend/src/app.ts:66`, the middleware at `:107-111`, and the socket route that relies
-  on it at `:460-468`. Two ways:
-  - a short-lived, single-use socket ticket from an authenticated REST call, which keeps
-    the bearer device token of 0014;
-  - an HttpOnly cookie session with CSRF and origin checks, as the social story proposes.
-
-  The ticket is the smaller change. It keeps one session model for every client and adds
-  no CSRF surface.
-
-- **Hosting.** Serving the app from the Worker's own host, with a static-assets binding,
-  avoids CORS. The link host already shares the Worker (`backend/src/app.ts:474`). A
-  separate host is a frozen-id change and a record.
-- **Platform `web`.** `android` and `ios` are fixed in the version header
-  (`backend/src/client-version.ts:9`), in the D1 CHECK constraint
-  (`backend/migrations/0001_accounts.sql:17`) and in zod (`backend/src/accounts.ts:166`,
-  `:405`). Adding `web` takes a migration and a floor var
-  ([0030](decisions/0030-client-version-floor.md)). It is additive, but new code should
-  not add more `('android','ios')` constraints.
-- **Contract.** A TypeScript client would be generated from `api/openapi.json` (an
-  amendment to [0005](decisions/0005-contract-zod-openapi-generated-clients.md)).
-- **Push.** Web Push (VAPID) is new, so the first slice should have none: messages
-  arrive while the tab is open.
+- **Session is not device.** Today signing in creates an MLS device: `POST /v1/devices`
+  turns an OIDC code into a device row with `device_key BLOB NOT NULL`
+  (`backend/migrations/0001_accounts.sql:14-24`), and every `/v1/*` route needs that
+  device's bearer token (`backend/src/app.ts:66`, `:107-111`). A browser that signs in only
+  to read a community would join every group and become a ghost device on eviction. The
+  web therefore signs in to a **session**: a D1 row referenced by an HttpOnly, Secure,
+  SameSite=Lax cookie, with an explicit Origin check on every state-changing request. Page
+  script never holds a bearer token. The native apps keep 0014's device token.
+- **Sockets.** A browser `WebSocket` cannot send `Authorization`, but it does send a
+  same-origin cookie on the upgrade. A session needs no socket ticket. Whether a linked
+  browser device later authenticates its socket by its session or by a ticket for its
+  device is part of the linked-device record.
+- **Hosting.** Serving the app from the Worker's own host avoids CORS and keeps the cookie
+  first-party. The link host already shares the Worker (`backend/src/app.ts:476`). A web
+  host is a frozen-id change and a record.
+- **Platform `web`.** `android` and `ios` are written out in zod
+  (`backend/src/api/devices.ts:53,276`, `backend/src/api/health.ts:11`), in the version
+  header and its comparison (`backend/src/client-version.ts:9,35`), in the env types
+  (`backend/src/env/index.ts:28`), in the D1 CHECK constraint
+  (`backend/migrations/0001_accounts.sql:17`) and in the core (`core/client/src/api.rs:284-287`).
+  They should come from one list before `web` joins it
+  ([0030](decisions/0030-client-version-floor.md)).
+- **Contract.** A TypeScript client is generated from `api/openapi.json`, like the Kotlin
+  frames ([0005](decisions/0005-contract-zod-openapi-generated-clients.md)).
+- **Push.** Web Push (VAPID) is new, so the first web slice has none.
 
 ### Alternatives to a browser
 
 - **A desktop app (Tauri) as a linked device.** The native core runs unchanged: SQLCipher,
-  the blocking transport, `std::fs` and `SystemTime` all work. A signed installer answers
-  code delivery, and the OS keychain holds the key. It is the cheapest non-phone client,
-  and its TypeScript UI can later become the web UI, with the wasm core swapped in.
+  the blocking transport, `std::fs` and `SystemTime` all work, and the OS keychain holds the
+  key. For a messenger alone it would be the cheapest non-phone client. For a social
+  platform it is a detour: it adds a third release pipeline and gives no links to share,
+  and a UI built on the native core's two connections would hide the browser's
+  one-connection constraint until the move to the web.
 - **A PWA** is a way to deliver the web client, not an alternative to it. It gives
   installability, Web Push on iOS, and exemption from Safari's 7-day cap.
 - **A phone-tethered proxy** (WhatsApp in 2015) needs the phone online, which is a dead
@@ -191,65 +204,49 @@ than a phone, on both counts, and require a strict CSP and no third-party script
 
 ### For the maintainer, not an agent
 
-- Register an `https` redirect URI for the web client with Kenni. The Google web client
-  id already exists.
+- Register an `https` redirect URI for the web client with Kenni, and a Google web client.
 - Any new host or DNS.
 - The records themselves.
 
-## What to do now, and what to decide later
+## The chosen path
 
-**Now. These are cheap insurance that keeps the core web-ready. They need one core release
-and no web code:**
+The maintainer chose the social platform with an encrypted messenger, web first. The
+roadmap is [#309](https://github.com/samtak-svf/icelandic-messenger/issues/309). In short:
 
-1. The fail-closed cipher check in `connect`, with a test.
-2. A `Clock` owned by `Client`, documented as agreeing with the SQL clock. This also
-   improves tests.
-3. A `cargo check -p spjall-client --target wasm32-unknown-unknown` job in `core.yml`, and
-   clippy `disallowed-methods` for `std::fs` outside the media modules. This is the
-   cheapest item, and the only one that stops silent drift, such as a crate pulling in
-   tokio or native-tls.
-4. No new `('android','ios')` constraints.
-
-**Before any web or desktop code, two records:**
-
-- Inactivity expiry for non-phone devices (feeds 0028).
-- History transfer from a sibling device. This amends 0006's "sees only future messages",
-  and it is explicitly not a server-side backup.
-
-**Then:**
-
-- The first non-phone client is a Tauri desktop app, linked to the phone, on the native
-  core.
-- Web comes after the closed beta, if it is still wanted. The order would be:
-  1. the async-core decision;
-  2. a spike of OPFS, several tabs and the transport;
-  3. the socket ticket, the `web` platform and same-origin hosting;
-  4. the web shell: sign-in, the conversation list and text, with the rest one decision
-     at a time, as on the apps.
+1. **Decisions:** the product scope (amends 0009 and 0044); account, login identity,
+   session and device as four things (amends 0014); the web host; communities and
+   moderation; and, last, non-phone devices as linked devices (amends 0006).
+2. **Groundwork beside the closed beta:** the core's web guards
+   ([#265](https://github.com/samtak-svf/icelandic-messenger/pull/265)), platforms from one
+   list, backend modules with enforced boundaries, and a measured D1 social workload.
+3. **Sessions:** a `sessions` table, server-handled web sign-in, revocation, and `web` in
+   the client-version contract.
+4. **The web shell**, served by the same Worker, consuming the generated contract and
+   brand.
+5. **The first social slice** after the open beta, web first; then news.
+6. **Encrypted chat in the browser last:** the storage measurement, the async core
+   (the first engineering decision under core point 3), enrolment approved by a phone, and
+   history from a sibling device.
 
 **Expensive to reverse, so worth knowing now:**
 
-- **The blocking `Transport`.** Leave it alone for now, because the apps and 0056
-  rest on it. If a web record passes, deciding between it and an async core comes first.
-- **Session equals MLS device** (`device_key BLOB NOT NULL`, `0001_accounts.sql:19`). The
-  story's split between account sessions and devices is a need of the social platform. A
-  social web client without E2EE would be a plain web app with no wasm, which is a
-  different project from an E2EE messenger in a browser.
-- **History must stay exportable from a device.** Nothing today prevents that. Keep it so.
+- **The blocking `Transport`.** Leave it alone, because the apps and 0056 rest on it. The
+  async-core decision comes before any browser chat.
+- **History must stay exportable from a device.** Nothing today prevents that. Keep it so;
+  the sibling transfer depends on it.
 
-## Sketch for the scope records
+## Sketch for the linked-device record
 
 > **A non-phone device is a linked device** (draft)
 >
-> - A desktop or browser client is linked from a phone, as its own MLS device under 0014.
->   History reaches it from a sibling device, encrypted to it, never from the server.
+> - A desktop or browser client is linked from a signed-in session and approved on a phone,
+>   as its own MLS device under 0014. History reaches it from a sibling device, encrypted to
+>   it, never as a server-side backup.
 > - A non-phone device expires after a period without use, and the server removes its
 >   leaves as under 0028.
-> - The first non-phone client is a desktop app on the native core. A browser follows
->   only after the async-core decision, on sqlite3mc in OPFS, with a store that refuses to
->   be plaintext and a key wrapped by a non-extractable WebCrypto key. It is served
->   same-origin from the Worker's host, uses a socket ticket rather than a cookie session,
->   and has no push in its first slice.
-> - Rules out: a web client without end-to-end encryption, a server-side key or history
->   backup, a third-party script on the app's origin, and any non-phone client before the
->   closed beta's UX pass is done.
+> - In a browser it runs the wasm core in a Worker after the async-core decision, on the
+>   store the browser measurement chose, with a store that refuses to be plaintext and a
+>   key wrapped by a non-extractable WebCrypto key. Every script carries SRI, and build
+>   hashes are published.
+> - Rules out: a server-side key or history backup, a third-party script on the app's
+>   origin, and MLS enrolment as a side effect of signing in.

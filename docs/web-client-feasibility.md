@@ -229,7 +229,7 @@ and no web code:**
 
 **Expensive to reverse, so worth knowing now:**
 
-- **The blocking `Transport`.** Leave it alone for now, because the apps, 0019 and 0056
+- **The blocking `Transport`.** Leave it alone for now, because the apps and 0056
   rest on it. If a web record passes, deciding between it and an async core comes first.
 - **Session equals MLS device** (`device_key BLOB NOT NULL`, `0001_accounts.sql:19`). The
   story's split between account sessions and devices is a need of the social platform. A

@@ -5,11 +5,12 @@
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import assert from "node:assert/strict";
 
 const [pkg, native, expect] = process.argv.slice(2);
-const spike = await import(join(pkg, "spjall_web_spike.js"));
+const spike = await import(pathToFileURL(resolve(pkg, "spjall_web_spike.js")).href);
 const dir = mkdtempSync(join(tmpdir(), "spjall-web-spike-"));
 const file = (name) => join(dir, name);
 const run = (...args) =>

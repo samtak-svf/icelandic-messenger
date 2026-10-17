@@ -87,12 +87,12 @@ The hard part of a browser client is persistence and code delivery, not MLS.
 
 ### In the core
 
-1. **A store must refuse to be plaintext.** Today a wasm build would ship history
-   unencrypted with no error. `connect` (`core/store/src/lib.rs:631-640`) runs `PRAGMA key`
-   and checks nothing after it. It must confirm the cipher is active (SQLCipher answers
-   `PRAGMA cipher_version`; sqlite3mc has its own probe) and fail otherwise. The check costs
-   nothing on the apps, and it closes the same hole in any future build that loses
-   SQLCipher. Worth doing now.
+1. **A store must refuse to be plaintext.** Done in
+   [#265](https://github.com/samtak-svf/icelandic-messenger/pull/265). A wasm build without a
+   cipher would have shipped history unencrypted with no error: `connect`
+   (`core/store/src/lib.rs:631`) ran `PRAGMA key` and checked nothing after it. It now asks
+   the probes in `CIPHER_PROBES` (`core/store/src/lib.rs:646`; SQLCipher answers
+   `cipher_version`, sqlite3mc `cipher`) and refuses a SQLite that answers neither.
 2. **Encryption at rest: sqlite3mc.** It keeps the store's code and its one-transaction
    decrypt-and-store ([0016](decisions/0016-one-encrypted-store-owned-by-the-core.md)).
    The cipher scheme would differ from the apps, but no file ever moves between a browser
@@ -106,15 +106,15 @@ The hard part of a browser client is persistence and code delivery, not MLS.
    opens a second connection
    ([0056](decisions/0056-a-read-never-waits-for-the-network.md)). The core would also run
    on a single Worker thread, so a blocking `sync()` would hold every `View` read
-   (`core/client/src/lib.rs:1023`) behind the network. That is the slow list 0056 fixed on
+   (`core/client/src/lib.rs:1021`) behind `sync()` (`:1154`) and the network. That is the slow list 0056 fixed on
    the apps. A web client must either make the core async or keep a UI-side mirror of the
    lists, which 0056 rules out for the apps. **This is the first engineering decision for
    web, not a detail.**
-4. **One clock, agreeing with SQL.** `spjall-client` reads `SystemTime` and `Instant`
-   directly (`core/client/src/lib.rs:365`, `:1007`). A `Clock` owned by `Client` fixes
-   that, and `web-time` is already in the wasm graph through openmls. The `UNEXPIRED` views
-   use SQLite's own `unixepoch()` (`core/store/src/lib.rs:605-609`), as does `migrate()`
-   (`:659`), which the VFS serves on wasm. The injected clock must agree with it, or expiry differs between read and purge.
+4. **One clock, agreeing with SQL.** Done in #265: `spjall-client` read `SystemTime` and
+   `Instant` directly, and now reads them through `core/client/src/clock.rs`, with
+   `web-time` on wasm. The `UNEXPIRED` views use SQLite's own `unixepoch()`
+   (`core/store/src/lib.rs:605-609`), as does `migrate()` (`:683`), which the VFS serves on
+   wasm. The clock must agree with it, or expiry differs between read and purge.
 5. **Files become bytes.** `Transport::upload` and `download` take `&Path`
    (`core/client/src/api.rs:62-72`), and `media.rs`, `photo.rs` and `account.rs:624` use
    `std::fs`. `Client::forward` passes a media file's path on (`core/client/src/forward.rs:47`),
@@ -166,7 +166,7 @@ than a phone, on both counts, and require a strict CSP and no third-party script
 - **Session is not device.** Today signing in creates an MLS device: `POST /v1/devices`
   turns an OIDC code into a device row with `device_key BLOB NOT NULL`
   (`backend/migrations/0001_accounts.sql:14-24`), and every `/v1/*` route needs that
-  device's bearer token (`backend/src/app.ts:66`, `:107-111`). A browser that signs in only
+  device's bearer token (`backend/src/app.ts:114-122`, `:139-141`). A browser that signs in only
   to read a community would join every group and become a ghost device on eviction. The
   web therefore signs in to a **session**: a D1 row referenced by an HttpOnly, Secure,
   SameSite=Lax cookie, with an explicit Origin check on every state-changing request. Page
@@ -176,15 +176,16 @@ than a phone, on both counts, and require a strict CSP and no third-party script
   browser device later authenticates its socket by its session or by a ticket for its
   device is part of the linked-device record.
 - **Hosting.** Serving the app from the Worker's own host avoids CORS and keeps the cookie
-  first-party. The link host already shares the Worker (`backend/src/app.ts:476`). A web
+  first-party. The link host already shares the Worker (`backend/src/app.ts:469`), and so
+  does Google's web redirect (`backend/src/env/index.ts:156`). A web
   host is a frozen-id change and a record.
-- **Platform `web`.** `android` and `ios` are written out in zod
-  (`backend/src/api/devices.ts:53,276`, `backend/src/api/health.ts:11`), in the version
-  header and its comparison (`backend/src/client-version.ts:9,35`), in the env types
-  (`backend/src/env/index.ts:28`), in the D1 CHECK constraint
-  (`backend/migrations/0001_accounts.sql:17`) and in the core (`core/client/src/api.rs:284-287`).
-  They should come from one list before `web` joins it
-  ([0030](decisions/0030-client-version-floor.md)).
+- **Platform `web`.** `android` and `ios` were written out in the zod schemas, the version
+  header and its comparison, and the env types. Since
+  [#310](https://github.com/samtak-svf/icelandic-messenger/pull/310) they all read one list
+  (`backend/src/platforms.ts:8`), and `backend/test/platforms.test.ts` shows a third platform
+  is one entry. The D1 CHECK constraint (`backend/migrations/0001_accounts.sql:17`) and the
+  core's enum (`core/client/src/api.rs:284-287`) still name the two, and `web` joins them
+  only after the session record ([0030](decisions/0030-client-version-floor.md)).
 - **Contract.** A TypeScript client is generated from `api/openapi.json`, like the Kotlin
   frames ([0005](decisions/0005-contract-zod-openapi-generated-clients.md)).
 - **Push.** Web Push (VAPID) is new, so the first web slice has none.
